@@ -15,7 +15,7 @@ class AccelerometerSensorService : BaseSensorService () {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         this.sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
         if (this.sensor != null) {
-            sensorManager.registerListener(this, this.sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, this.sensor, SensorManager.SENSOR_DELAY_GAME) //SENSOR_DELAY_NORMAL
             Log.i("AccelerometerSensorService", "Sensor: $sensor")
         } else {
             Log.e("AccelerometerSensorService", "The sensor not available.")

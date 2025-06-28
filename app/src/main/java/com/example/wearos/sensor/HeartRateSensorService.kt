@@ -15,7 +15,7 @@ class HeartRateSensorService : BaseSensorService () {
         sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
         this.sensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
         if (this.sensor != null) {
-            sensorManager.registerListener(this, this.sensor, SensorManager.SENSOR_DELAY_NORMAL)
+            sensorManager.registerListener(this, this.sensor, SensorManager.SENSOR_DELAY_GAME) //SENSOR_DELAY_NORMAL
             Log.i("HeartRateSensorService", "Sensor: $sensor")
         } else {
             Log.e("HeartRateSensorService", "The sensor not available.")
