@@ -14,6 +14,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.runtime.*
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -61,16 +62,29 @@ fun WearApp(greetingName: String) {
             modifier = Modifier
                 .fillMaxSize()
                 .background(MaterialTheme.colors.background),
-            verticalArrangement = Arrangement.Center
+            verticalArrangement = Arrangement.Center,
+            horizontalAlignment = Alignment.CenterHorizontally
         ) {
             if (hasBodySensorsPermission) {
-                Greeting(greetingName = "Tap to start sensor")
+                var isSensing by remember { mutableStateOf(false) }
+
+                Greeting(greetingName = if (isSensing) "Sensing..." else "Tap to start sensor")
+
                 Button(onClick = {
-                    context.startService(Intent(context, AccelerometerSensorService::class.java))
-                    context.startService(Intent(context, HeartRateSensorService::class.java))
-                    context.startService(Intent(context, LightSensorService::class.java))
+                    if (isSensing) {
+                        // Stop services
+                        context.stopService(Intent(context, AccelerometerSensorService::class.java))
+                        context.stopService(Intent(context, HeartRateSensorService::class.java))
+                        context.stopService(Intent(context, LightSensorService::class.java))
+                    } else {
+                        // Start services
+                        context.startService(Intent(context, AccelerometerSensorService::class.java))
+                        context.startService(Intent(context, HeartRateSensorService::class.java))
+                        context.startService(Intent(context, LightSensorService::class.java))
+                    }
+                    isSensing = !isSensing // Toggle the state
                 }) {
-                    Text("Start")
+                    Text(if (isSensing) "Stop" else "Start")
                 }
             } else {
                 Greeting(greetingName = "Tap to request permission")
