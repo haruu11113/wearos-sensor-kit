@@ -22,3 +22,5 @@ local.properties
 /captures
 .externalNativeBuild
 Local.java
+
+.env
