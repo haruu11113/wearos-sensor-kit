@@ -8,7 +8,7 @@ import android.hardware.SensorManager
 
 abstract class BaseSensorCollector(
     context: Context,
-    private val listener: SensorCollectorListener
+    var listener: SensorCollectorListener? = null
 ) : SensorEventListener {
 
     abstract val sensorType: Int
@@ -30,7 +30,7 @@ abstract class BaseSensorCollector(
 
     override fun onSensorChanged(event: SensorEvent) {
         val data = formatData(event)
-        listener.onSensorData(data)
+        listener?.onSensorData(data)
     }
 
     override fun onAccuracyChanged(sensor: Sensor, accuracy: Int) {}
