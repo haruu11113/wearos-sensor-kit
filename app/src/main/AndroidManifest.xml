@@ -26,9 +26,7 @@
         android:supportsRtl="true"
         android:theme="@android:style/Theme.DeviceDefault">
 
-        <service android:name=".sensor.AccelerometerSensorService" />
-        <service android:name=".sensor.LightSensorService" />
-        <service android:name=".sensor.HeartRateSensorService" />
+        <service android:name=".sensor.SensingService" />
 
         <service
             android:name=".complication.MainComplicationService"
