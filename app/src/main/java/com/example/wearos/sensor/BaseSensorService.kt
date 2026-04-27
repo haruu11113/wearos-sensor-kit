@@ -1,37 +1,33 @@
 package com.example.wearos.sensor
 
 import android.app.Service
+import android.content.Context
 import android.content.Intent
 import android.os.IBinder
 import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import com.example.wearos.network.UdpSender
+import com.example.wearos.network.BaseSender
 import java.io.File
 import java.io.FileWriter
 import android.util.Log
 
+import com.example.wearos.network.UdpSender
 
 open class BaseSensorService : Service(), SensorEventListener {
-    public lateinit var sensorManager: SensorManager
+    public var sender: BaseSender = UdpSender("192.168.50.78", 6666)
+    public var sensorManager: SensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     public var sensor: Sensor? = null
 
     override fun onCreate() {
         super.onCreate()
-//        sensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
-//        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_HEART_RATE)
-//        sensor = sensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER)
-//        Log.d("SensorService", "Sensor: $sensor")
-//        sensorManager.registerListener(this, sensor, SensorManager.SENSOR_DELAY_NORMAL)
     }
 
     override fun onSensorChanged(event: SensorEvent) {
         val csvString: String = this.formatMessage(event)
-        // var udp: UdpSender = UdpSender("192.168.179.13", 6666)
-        var udp: UdpSender = UdpSender("192.168.50.78", 6666)
         Thread {
-            udp.sendUDPMessage("${csvString}")
+            this.sender.sendMessage(csvString)
         }.start()
         // saveToCSV(csvString)
     }
@@ -59,6 +55,6 @@ open class BaseSensorService : Service(), SensorEventListener {
 
     override fun onDestroy() {
         super.onDestroy()
-        sensorManager.unregisterListener(this)
+//        sensorManager.unregisterListener(this)
     }
 }

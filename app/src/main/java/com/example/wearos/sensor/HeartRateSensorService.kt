@@ -5,10 +5,11 @@ import android.hardware.Sensor
 import android.hardware.SensorManager
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
+import com.example.wearos.sensor.BaseSensorService
 import android.util.Log
 
 
-class HeartRateSensorService : BaseSensorService () {
+class HeartRateSensorService : BaseSensorService() {
     override fun onCreate() {
         super.onCreate()
         Log.i("HeartRateSensorService", "created")

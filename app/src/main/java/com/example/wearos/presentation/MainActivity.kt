@@ -57,6 +57,9 @@ fun WearApp(greetingName: String) {
         hasBodySensorsPermission = isGranted
     }
 
+    val udpAddress = "192.168.50.236" // Replace with your desired IP address
+    val udpPort = 6666 // Replace with your desired port
+
     WearosTheme {
         Column(
             modifier = Modifier
@@ -71,16 +74,17 @@ fun WearApp(greetingName: String) {
                 Greeting(greetingName = if (isSensing) "Sensing..." else "Tap to start sensor")
 
                 Button(onClick = {
+                    // Start services
+
                     if (isSensing) {
                         // Stop services
                         context.stopService(Intent(context, AccelerometerSensorService::class.java))
                         context.stopService(Intent(context, HeartRateSensorService::class.java))
                         context.stopService(Intent(context, LightSensorService::class.java))
                     } else {
-                        // Start services
                         context.startService(Intent(context, AccelerometerSensorService::class.java))
-                        context.startService(Intent(context, HeartRateSensorService::class.java))
                         context.startService(Intent(context, LightSensorService::class.java))
+                        context.startService(Intent(context, HeartRateSensorService::class.java))
                     }
                     isSensing = !isSensing // Toggle the state
                 }) {
