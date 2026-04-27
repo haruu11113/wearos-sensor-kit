@@ -8,7 +8,7 @@ import android.hardware.Sensor
 import android.hardware.SensorEvent
 import android.hardware.SensorEventListener
 import android.hardware.SensorManager
-import com.example.wearos.network.BaseSender
+import com.example.wearos.network.DataSender
 import java.io.File
 import java.io.FileWriter
 import android.util.Log
@@ -16,7 +16,7 @@ import android.util.Log
 import com.example.wearos.network.UdpSender
 
 open class BaseSensorService : Service(), SensorEventListener {
-    public var sender: BaseSender = UdpSender("192.168.50.78", 6666)
+    public var sender: DataSender = UdpSender("192.168.50.78", 6666)
     public var sensorManager: SensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     public var sensor: Sensor? = null
 
@@ -27,7 +27,7 @@ open class BaseSensorService : Service(), SensorEventListener {
     override fun onSensorChanged(event: SensorEvent) {
         val csvString: String = this.formatMessage(event)
         Thread {
-            this.sender.sendMessage(csvString)
+            this.sender.send(csvString)
         }.start()
         // saveToCSV(csvString)
     }
