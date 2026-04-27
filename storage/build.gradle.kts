@@ -24,4 +24,6 @@ android {
 dependencies {
     implementation(libs.core.ktx)
     implementation(project(":sensing"))
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.firestore.ktx)
 }
