@@ -6,9 +6,8 @@ import android.hardware.SensorEvent
 import android.hardware.SensorManager
 
 class AccelerometerCollector(
-    context: Context,
-    listener: SensorCollectorListener
-) : BaseSensorCollector(context, listener) {
+    context: Context
+) : BaseSensorCollector(context) {
 
     override val sensorType: Int = Sensor.TYPE_ACCELEROMETER
     override val samplingRate: Int = SensorManager.SENSOR_DELAY_GAME
