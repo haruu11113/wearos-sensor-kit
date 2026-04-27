@@ -82,9 +82,18 @@ fun WearApp(greetingName: String) {
                         context.stopService(Intent(context, HeartRateSensorService::class.java))
                         context.stopService(Intent(context, LightSensorService::class.java))
                     } else {
-                        context.startService(Intent(context, AccelerometerSensorService::class.java))
-                        context.startService(Intent(context, LightSensorService::class.java))
-                        context.startService(Intent(context, HeartRateSensorService::class.java))
+                        context.startService(Intent(context, AccelerometerSensorService::class.java).apply {
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
+                        })
+                        context.startService(Intent(context, LightSensorService::class.java).apply {
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
+                        })
+                        context.startService(Intent(context, HeartRateSensorService::class.java).apply {
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
+                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
+                        })
                     }
                     isSensing = !isSensing // Toggle the state
                 }) {

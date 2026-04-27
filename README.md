@@ -23,7 +23,7 @@ Wear OS デバイス（スマートウォッチ）でセンサーデータを取
 ```
 app/src/main/java/com/example/wearos/
 ├── network/
-│   ├── BaseSender.kt               # 送信インターフェース
+│   ├── DataSender.kt               # 送信インターフェース
 │   └── UdpSender.kt                # UDP 送信実装
 ├── sensor/
 │   ├── BaseSensorService.kt        # センサー Service の抽象基底クラス
@@ -49,12 +49,12 @@ app/src/main/java/com/example/wearos/
 
 ## UDP 送信先
 
-`UdpSender.kt` でデフォルトの IP・ポートを指定しています。
+`MainActivity.kt` で送信先の IP・ポートを指定しています。
 
 ```kotlin
-// app/src/main/java/com/example/wearos/network/UdpSender.kt
-private val host = "192.168.50.78"
-private val port = 6666
+// app/src/main/java/com/example/wearos/presentation/MainActivity.kt
+val udpAddress = "192.168.50.236" // Replace with your desired IP address
+val udpPort = 6666 // Replace with your desired port
 ```
 
 受信側でポート `6666` を listen しておくとデータを受け取れます。
@@ -91,7 +91,7 @@ MainActivity
                      LightSensorService
                        └─ onSensorChanged()
                             └─ BaseSensorService.formatMessage()
-                                 └─ UdpSender.sendMessage()  ──▶ UDP パケット送信
+                                 └─ UdpSender.send()  ──▶ UDP パケット送信
 ```
 
 センサーイベントはバックグラウンドスレッドで UDP 送信されるため、メインスレッドをブロックしません。

@@ -16,19 +16,37 @@ import android.util.Log
 import com.example.wearos.network.UdpSender
 
 open class BaseSensorService : Service(), SensorEventListener {
-    public var sender: DataSender = UdpSender("192.168.50.78", 6666)
+    public var sender: DataSender? = null
     public var sensorManager: SensorManager = getSystemService(Context.SENSOR_SERVICE) as SensorManager
     public var sensor: Sensor? = null
+
+    companion object {
+        const val EXTRA_UDP_ADDRESS = "udp_address"
+        const val EXTRA_UDP_PORT = "udp_port"
+    }
 
     override fun onCreate() {
         super.onCreate()
     }
 
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        val address = intent?.getStringExtra(EXTRA_UDP_ADDRESS)
+        val port = intent?.getIntExtra(EXTRA_UDP_PORT, -1)
+        if (address != null && port != null && port != -1) {
+            sender = UdpSender(address, port)
+        } else {
+            Log.w("BaseSensorService", "UDP configuration missing: address=$address, port=$port. Sensor data will not be sent.")
+        }
+        return super.onStartCommand(intent, flags, startId)
+    }
+
     override fun onSensorChanged(event: SensorEvent) {
         val csvString: String = this.formatMessage(event)
-        Thread {
-            this.sender.send(csvString)
-        }.start()
+        sender?.let { s ->
+            Thread {
+                s.send(csvString)
+            }.start()
+        }
         // saveToCSV(csvString)
     }
 
