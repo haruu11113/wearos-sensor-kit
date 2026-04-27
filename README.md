@@ -159,6 +159,17 @@ SensorPipelineConfig(
 
 `store` / `sender` はどちらも `null` 可（省略した機能はスキップされます）。
 
+### HTTP で送信する
+
+```kotlin
+SensorPipelineConfig(
+    collectors = listOf(AccelerometerCollector(this)),
+    sender = HttpSender("https://example.com/api/sensor")
+)
+```
+
+コード例の詳細 → [docs/USAGE.md](docs/USAGE.md)
+
 ## パーミッション
 
 | パーミッション | 用途 |

@@ -142,18 +142,35 @@ SensorPipelineConfig(
 )
 ```
 
-### 独自の送信先に差し替える
+### HTTP で送信する
+
+`HttpSender` はライブラリに組み込み済みです。URL を渡すだけで使えます。
 
 ```kotlin
-class HttpSender(private val url: String) : DataSender {
+SensorPipelineConfig(
+    collectors = listOf(AccelerometerCollector(this)),
+    sender = HttpSender("https://example.com/api/sensor")
+)
+```
+
+- `Content-Type: application/json` で POST します
+- タイムアウトは接続・読み取りともに 5000ms
+- 非 2xx レスポンスは `Log.w` で警告、例外は `Log.e` で記録してクラッシュしません
+
+### 独自の送信先に差し替える
+
+`DataSender` を実装すれば MQTT・WebSocket など任意のプロトコルに対応できます。
+
+```kotlin
+class MqttSender(private val topic: String) : DataSender {
     override fun send(payload: String) {
-        // HTTP POST など
+        // MQTT publish など
     }
 }
 
 SensorPipelineConfig(
     collectors = listOf(AccelerometerCollector(this)),
-    sender = HttpSender("https://example.com/sensor")
+    sender = MqttSender("sensors/accelerometer")
 )
 ```
 
