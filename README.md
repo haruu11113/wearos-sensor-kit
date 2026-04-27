@@ -89,7 +89,16 @@ git submodule add https://github.com/haruu11113/wearos.git libs/wearos
 git submodule update --init
 ```
 
-**Step 2** — `settings.gradle.kts` に追記:
+**Step 2** — `local.properties` をシンボリックリンクで共有:
+
+composite build では `libs/wearos/` にも Android SDK パスが必要です。
+親プロジェクトの `local.properties` へのシンボリックリンクを作成して共有してください。
+
+```bash
+ln -s $(pwd)/local.properties libs/wearos/local.properties
+```
+
+**Step 3** — `settings.gradle.kts` に追記:
 
 ```kotlin
 includeBuild("libs/wearos") {
@@ -99,7 +108,7 @@ includeBuild("libs/wearos") {
 }
 ```
 
-**Step 3** — `app/build.gradle.kts` に依存を追加:
+**Step 4** — `app/build.gradle.kts` に依存を追加:
 
 ```kotlin
 dependencies {
