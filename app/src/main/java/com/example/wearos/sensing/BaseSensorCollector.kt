@@ -16,10 +16,11 @@ abstract class BaseSensorCollector(
     abstract fun formatData(event: SensorEvent): SensorData
 
     private val sensorManager: SensorManager =
-        context.getSystemService(Context.SENSOR_SERVICE) as SensorManager
+        context.getSystemService(Context.SENSOR_SERVICE) as? SensorManager
+            ?: throw IllegalStateException("SensorManager is not available")
 
     fun start() {
-        val sensor = sensorManager.getDefaultSensor(sensorType)
+        val sensor = sensorManager.getDefaultSensor(sensorType) ?: return
         sensorManager.registerListener(this, sensor, samplingRate)
     }
 
