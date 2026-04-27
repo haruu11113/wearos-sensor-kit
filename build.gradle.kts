@@ -6,4 +6,10 @@ plugins {
     alias(libs.plugins.org.jetbrains.kotlin.android) apply false
 }
 
+// group / version は git submodule + includeBuild の dependencySubstitution で参照される
+allprojects {
+    group = "com.github.haruu11113.wearos"
+    version = "1.0.0-SNAPSHOT"
+}
+
 true // Needed to make the Suppress annotation work for the plugins block

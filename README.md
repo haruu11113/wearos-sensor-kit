@@ -155,5 +155,6 @@ MainActivity
 
 ## ドキュメント
 
+- [使い方ガイド（Git Submodule / コード例）](docs/USAGE.md)
 - [設計方針・モジュール詳細](docs/README.md)
 - [実装 issue 一覧](docs/TODO/README.md)
