@@ -14,4 +14,4 @@ dependencyResolutionManagement {
 }
 
 rootProject.name = "wearos"
-include(":app")
+include(":sensing", ":storage", ":network", ":pipeline", ":app")

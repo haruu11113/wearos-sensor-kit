@@ -7,8 +7,8 @@ import java.net.InetAddress
 import java.net.InetSocketAddress
 
 /**
- * @parms address: 送信先のIPアドレスまたはホスト名
- * @parms port: 送信先のポート番号
+ * @param address 送信先のIPアドレスまたはホスト名
+ * @param port 送信先のポート番号
  *
  * UdpSenderは、指定されたアドレスとポートにUDPメッセージを送信するクラスです。
  * このクラスは、DataSenderインターフェースを実装しています。
@@ -20,10 +20,10 @@ class UdpSender(private val address: String, private val port: Int) : DataSender
     override fun send(payload: String) {
         Log.i("UdpSender", "sendUDPMessage message: ${payload} on ${this.address}:${this.port}")
         try {
-            var sendData: ByteArray = payload.toByteArray()
+            val sendData: ByteArray = payload.toByteArray()
             val socket: DatagramSocket = DatagramSocket() // UDPソケットを開く
             val IPAddress = InetAddress.getByName(this.address)
-            var socketAddress: InetSocketAddress = InetSocketAddress(IPAddress, this.port)
+            val socketAddress: InetSocketAddress = InetSocketAddress(IPAddress, this.port)
             val pack = DatagramPacket(sendData, sendData.size, socketAddress)
             socket.send(pack)
             socket.close()

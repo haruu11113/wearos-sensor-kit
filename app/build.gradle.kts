@@ -71,4 +71,5 @@ dependencies {
     debugImplementation(libs.ui.tooling)
     debugImplementation(libs.ui.test.manifest)
     implementation("androidx.health:health-services-client:1.0.0-beta02")
+    implementation(project(":pipeline"))
 }
