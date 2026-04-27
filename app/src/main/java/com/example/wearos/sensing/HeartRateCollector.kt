@@ -12,9 +12,8 @@ import android.hardware.SensorManager
  * このパーミッションが付与されていない場合、センサーは利用できない。
  */
 class HeartRateCollector(
-    context: Context,
-    listener: SensorCollectorListener
-) : BaseSensorCollector(context, listener) {
+    context: Context
+) : BaseSensorCollector(context) {
 
     override val sensorType: Int = Sensor.TYPE_HEART_RATE
     override val samplingRate: Int = SensorManager.SENSOR_DELAY_GAME

@@ -8,25 +8,18 @@ class SensorPipeline(private val config: SensorPipelineConfig) {
 
     private val sendExecutor = Executors.newSingleThreadExecutor()
 
-    private val listener = object : SensorCollectorListener {
-        override fun onSensorData(data: SensorData) {
-            val serialized = config.serializer.serialize(data)
-            config.store?.save(serialized)
-            sendExecutor.execute { config.sender?.send(serialized) }
-        }
-    }
-
     fun start() {
-        config.collectors.forEach { collector ->
-            collector.listener = listener
-            collector.start()
+        val listener = object : SensorCollectorListener {
+            override fun onSensorData(data: SensorData) {
+                val serialized = config.serializer.serialize(data)
+                config.store?.save(serialized)
+                sendExecutor.execute { config.sender?.send(serialized) }
+            }
         }
+        config.collectors.forEach { it.start(listener) }
     }
 
     fun stop() {
-        config.collectors.forEach { collector ->
-            collector.stop()
-            collector.listener = null
-        }
+        config.collectors.forEach { it.stop() }
     }
 }

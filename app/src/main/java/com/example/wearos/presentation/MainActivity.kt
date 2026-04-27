@@ -27,9 +27,7 @@ import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
 import com.example.wearos.R
 import com.example.wearos.presentation.theme.WearosTheme
-import com.example.wearos.sensor.AccelerometerSensorService
-import com.example.wearos.sensor.HeartRateSensorService
-import com.example.wearos.sensor.LightSensorService
+import com.example.wearos.sensor.SensingService
 
 class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -74,25 +72,12 @@ fun WearApp(greetingName: String) {
                 Greeting(greetingName = if (isSensing) "Sensing..." else "Tap to start sensor")
 
                 Button(onClick = {
-                    // Start services
-
                     if (isSensing) {
-                        // Stop services
-                        context.stopService(Intent(context, AccelerometerSensorService::class.java))
-                        context.stopService(Intent(context, HeartRateSensorService::class.java))
-                        context.stopService(Intent(context, LightSensorService::class.java))
+                        context.stopService(Intent(context, SensingService::class.java))
                     } else {
-                        context.startService(Intent(context, AccelerometerSensorService::class.java).apply {
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
-                        })
-                        context.startService(Intent(context, LightSensorService::class.java).apply {
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
-                        })
-                        context.startService(Intent(context, HeartRateSensorService::class.java).apply {
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_ADDRESS, udpAddress)
-                            putExtra(com.example.wearos.sensor.BaseSensorService.EXTRA_UDP_PORT, udpPort)
+                        context.startService(Intent(context, SensingService::class.java).apply {
+                            putExtra(SensingService.EXTRA_UDP_ADDRESS, udpAddress)
+                            putExtra(SensingService.EXTRA_UDP_PORT, udpPort)
                         })
                     }
                     isSensing = !isSensing // Toggle the state
