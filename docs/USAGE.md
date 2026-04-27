@@ -25,7 +25,16 @@ your-app/
 └── settings.gradle.kts
 ```
 
-### 2. settings.gradle.kts に追記
+### 2. local.properties をシンボリックリンクで共有
+
+composite build では `libs/wearos/` にも Android SDK パスが必要です。
+親プロジェクトのルートで以下を実行し、`local.properties` へのシンボリックリンクを作成してください。
+
+```bash
+ln -s $(pwd)/local.properties libs/wearos/local.properties
+```
+
+### 3. settings.gradle.kts に追記
 
 ```kotlin
 // your-app/settings.gradle.kts
@@ -39,7 +48,7 @@ includeBuild("libs/wearos") {
 `pipeline` モジュールが `sensing` / `storage` / `network` を `api` で再エクスポートしているため、
 `pipeline` への依存を 1 つ追加するだけで全モジュールが使えます。
 
-### 3. app/build.gradle.kts に依存を追加
+### 4. app/build.gradle.kts に依存を追加
 
 ```kotlin
 // your-app/app/build.gradle.kts
@@ -48,7 +57,7 @@ dependencies {
 }
 ```
 
-### 4. AndroidManifest.xml にパーミッションを追加
+### 5. AndroidManifest.xml にパーミッションを追加
 
 ```xml
 <uses-permission android:name="android.permission.BODY_SENSORS" />
