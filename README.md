@@ -78,6 +78,39 @@ wearos/
 | 心拍数 | `"heart_rate"` |
 | 照度 | `"light"` |
 
+## インストール
+
+### Git Submodule（現在の推奨方法）
+
+**Step 1** — サブモジュールとして追加:
+
+```bash
+git submodule add https://github.com/haruu11113/wearos.git libs/wearos
+git submodule update --init
+```
+
+**Step 2** — `settings.gradle.kts` に追記:
+
+```kotlin
+includeBuild("libs/wearos") {
+    dependencySubstitution {
+        substitute(module("com.github.haruu11113.wearos:pipeline")).using(project(":pipeline"))
+    }
+}
+```
+
+**Step 3** — `app/build.gradle.kts` に依存を追加:
+
+```kotlin
+dependencies {
+    implementation("com.github.haruu11113.wearos:pipeline:1.0.0-SNAPSHOT")
+}
+```
+
+`pipeline` が `sensing` / `storage` / `network` を再エクスポートしているため、この 1 行で全モジュールが使えます。
+
+詳細・他のインストール方法 → [docs/USAGE.md](docs/USAGE.md)
+
 ## 使い方
 
 ### 最小コード例（送信のみ）
