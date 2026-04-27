@@ -1,6 +1,7 @@
-# WearOS センサーストリーミングアプリ
+# WearOS センシングライブラリ
 
-Wear OS デバイス（スマートウォッチ）でセンサーデータを取得し、UDP で外部サーバーへリアルタイム送信するアプリケーションです。
+Wear OS デバイス（スマートウォッチ）でセンサーデータを取得し、JSON 形式でローカル保存・UDP 送信できるライブラリです。
+センシング・保存・送信が疎結合に分離されており、別のアプリへのコピペや依存追加で再利用できます。
 
 ## 概要
 
@@ -10,75 +11,113 @@ Wear OS デバイス（スマートウォッチ）でセンサーデータを取
 | 言語 | Kotlin |
 | UI フレームワーク | Jetpack Compose (Wear Material) |
 | 通信プロトコル | UDP |
+| データ形式 | JSON (JSONL) |
 
-## 機能
-
-- 加速度センサー・心拍数センサー・照度センサーのデータ取得
-- センサーデータを CSV 形式で UDP パケットとして送信
-- Start / Stop ボタンによるセンシングの制御
-- `BODY_SENSORS` パーミッションの実行時リクエスト
-
-## プロジェクト構成
+## モジュール構成
 
 ```
-app/src/main/java/com/example/wearos/
-├── network/
-│   ├── DataSender.kt               # 送信インターフェース
-│   └── UdpSender.kt                # UDP 送信実装
-├── sensing/
-│   ├── SensorData.kt               # センサーデータクラス
-│   ├── SensorCollectorListener.kt  # コールバックインターフェース
-│   ├── BaseSensorCollector.kt      # センサーコレクターの抽象基底クラス
-│   ├── AccelerometerCollector.kt   # 加速度センサーコレクター
-│   ├── HeartRateCollector.kt       # 心拍数センサーコレクター
-│   └── LightCollector.kt           # 照度センサーコレクター
-├── pipeline/
-│   ├── SensorPipelineConfig.kt     # パイプライン設定
-│   └── SensorPipeline.kt           # センサーパイプライン（配線）
-├── storage/
-│   ├── SensorDataSerializer.kt     # シリアライザーインターフェース
-│   ├── JsonSerializer.kt           # JSON シリアライザー実装
-│   ├── SensorDataStore.kt          # ストアインターフェース
-│   └── LocalFileStore.kt           # ローカルファイル保存実装
-├── sensor/
-│   └── SensingService.kt           # センシング Service（3 センサーをまとめて管理）
-├── presentation/
-│   ├── MainActivity.kt             # メイン画面・Service 制御
-│   └── theme/                      # Compose テーマ (Color / Type / Theme)
-├── tile/
-│   └── MainTileService.kt          # Wear OS タイル
-└── complication/
-    └── MainComplicationService.kt  # ウォッチフェース コンプリケーション
+wearos/
+├── sensing/    センサーデータ取得（Android フレームワークのみ依存）
+├── storage/    JSON シリアライズ + ローカル保存（sensing に依存）
+├── network/    UDP 送信（依存なし）
+├── pipeline/   3 モジュールを繋ぐ配線層（全モジュールに依存）
+└── app/        サンプルアプリ（pipeline にのみ依存）
 ```
 
-## センサーとデータ形式
+### sensing
 
-| センサー | 更新レート | 送信フォーマット |
-|----------|------------|-----------------|
-| 加速度計 | SENSOR_DELAY_GAME | `acc,X,Y,Z,timestamp` |
-| 心拍数 | SENSOR_DELAY_GAME | `heart_rate,value,timestamp` |
-| 照度 | SENSOR_DELAY_NORMAL | `timestamp,light,value` |
+| ファイル | 役割 |
+|---------|------|
+| `SensorData.kt` | センサー値の型 (`type`, `values`, `timestampNs`) |
+| `SensorCollectorListener.kt` | データ受け取りコールバック |
+| `BaseSensorCollector.kt` | SensorManager 登録・解除の抽象基底 |
+| `AccelerometerCollector.kt` | 加速度センサー (`SENSOR_DELAY_GAME`) |
+| `HeartRateCollector.kt` | 心拍数センサー (`SENSOR_DELAY_GAME`、要 `BODY_SENSORS`) |
+| `LightCollector.kt` | 照度センサー (`SENSOR_DELAY_NORMAL`) |
 
-## UDP 送信先
+### storage
 
-`MainActivity.kt` で送信先の IP・ポートを指定しています。
+| ファイル | 役割 |
+|---------|------|
+| `SensorDataSerializer.kt` | シリアライズインターフェース |
+| `JsonSerializer.kt` | `SensorData` → JSON 文字列 |
+| `SensorDataStore.kt` | 永続化インターフェース |
+| `LocalFileStore.kt` | アプリ内ストレージへの JSONL 追記保存 |
+
+### network
+
+| ファイル | 役割 |
+|---------|------|
+| `DataSender.kt` | 送信インターフェース |
+| `UdpSender.kt` | UDP 送信実装 |
+
+### pipeline
+
+| ファイル | 役割 |
+|---------|------|
+| `SensorPipelineConfig.kt` | collectors / serializer / store / sender をまとめる設定 |
+| `SensorPipeline.kt` | `start()` / `stop()` でフロー全体を制御 |
+
+## データ形式
+
+センサーイベントは以下の JSON 形式でシリアライズされます。
+
+```json
+{
+  "type": "accelerometer",
+  "values": [0.12, -9.80, 0.05],
+  "timestamp_ns": 123456789
+}
+```
+
+`type` の値:
+
+| センサー | `type` 値 |
+|---------|-----------|
+| 加速度計 | `"accelerometer"` |
+| 心拍数 | `"heart_rate"` |
+| 照度 | `"light"` |
+
+## 使い方
+
+### 最小コード例（送信のみ）
 
 ```kotlin
-// app/src/main/java/com/example/wearos/presentation/MainActivity.kt
-val udpAddress = "192.168.50.236" // Replace with your desired IP address
-val udpPort = 6666 // Replace with your desired port
+class MySensingService : Service() {
+    private lateinit var pipeline: SensorPipeline
+
+    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
+        pipeline = SensorPipeline(
+            SensorPipelineConfig(
+                collectors = listOf(
+                    AccelerometerCollector(this),
+                    HeartRateCollector(this)
+                ),
+                sender = UdpSender("192.168.1.100", 6666)
+            )
+        )
+        pipeline.start()
+        return START_STICKY
+    }
+
+    override fun onDestroy() { pipeline.stop() }
+    override fun onBind(intent: Intent?) = null
+}
 ```
 
-受信側でポート `6666` を listen しておくとデータを受け取れます。
+### 保存 + 送信
 
-```bash
-# 受信確認例 (Linux/macOS)
-nc -ulp 6666
+```kotlin
+SensorPipelineConfig(
+    collectors = listOf(AccelerometerCollector(this)),
+    store  = LocalFileStore(this),           // ローカル保存も行う
+    sender = UdpSender("192.168.1.100", 6666)
+)
 ```
+
+`store` / `sender` はどちらも `null` 可（省略した機能はスキップされます）。
 
 ## パーミッション
-
-`AndroidManifest.xml` で宣言されている主なパーミッション:
 
 | パーミッション | 用途 |
 |----------------|------|
@@ -87,28 +126,34 @@ nc -ulp 6666
 | `INTERNET` | UDP 送信 |
 | `WAKE_LOCK` | センシング中のスリープ抑制 |
 
-## ビルド・実行方法
+## サンプルアプリのビルド・実行
 
-1. Android Studio で本プロジェクトを開く
-2. Wear OS 実機またはエミュレーターをデバイスとして選択
-3. Run ▶ でインストール
-4. アプリを起動 → パーミッション許可 → **Start** をタップ
+1. Android Studio でプロジェクトを開く
+2. Wear OS 実機またはエミュレーターを選択
+3. Run ▶ で `app` モジュールをインストール
+4. アプリ起動 → パーミッション許可 → **Start** をタップ
 
-## アーキテクチャ概要
+UDP 受信の確認:
+
+```bash
+nc -ulp 6666
+```
+
+## アーキテクチャ
 
 ```
 MainActivity
   └─ Start/Stop ──▶ SensingService
                       └─ SensorPipeline
-                           ├─ AccelerometerCollector ─▶ onSensorChanged()
-                           ├─ HeartRateCollector     ─▶ onSensorChanged()
-                           └─ LightCollector         ─▶ onSensorChanged()
+                           ├─ AccelerometerCollector
+                           ├─ HeartRateCollector      } onSensorChanged()
+                           └─ LightCollector
                                 └─ JsonSerializer.serialize()
-                                     └─ UdpSender.send()  ──▶ UDP パケット送信
+                                     ├─ LocalFileStore.save()   (省略可)
+                                     └─ UdpSender.send()  ──▶ UDP 送信 (省略可)
 ```
-
-センサーイベントはバックグラウンドスレッドで UDP 送信されるため、メインスレッドをブロックしません。
 
 ## ドキュメント
 
-- [Android Service / Activity の説明](docs/README.md)
+- [設計方針・モジュール詳細](docs/README.md)
+- [実装 issue 一覧](docs/TODO/README.md)
