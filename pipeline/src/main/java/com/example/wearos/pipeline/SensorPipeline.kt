@@ -21,5 +21,6 @@ class SensorPipeline(private val config: SensorPipelineConfig) {
 
     fun stop() {
         config.collectors.forEach { it.stop() }
+        sendExecutor.shutdown()
     }
 }
