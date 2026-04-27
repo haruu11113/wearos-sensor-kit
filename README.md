@@ -25,11 +25,23 @@ app/src/main/java/com/example/wearos/
 ├── network/
 │   ├── DataSender.kt               # 送信インターフェース
 │   └── UdpSender.kt                # UDP 送信実装
+├── sensing/
+│   ├── SensorData.kt               # センサーデータクラス
+│   ├── SensorCollectorListener.kt  # コールバックインターフェース
+│   ├── BaseSensorCollector.kt      # センサーコレクターの抽象基底クラス
+│   ├── AccelerometerCollector.kt   # 加速度センサーコレクター
+│   ├── HeartRateCollector.kt       # 心拍数センサーコレクター
+│   └── LightCollector.kt           # 照度センサーコレクター
+├── pipeline/
+│   ├── SensorPipelineConfig.kt     # パイプライン設定
+│   └── SensorPipeline.kt           # センサーパイプライン（配線）
+├── storage/
+│   ├── SensorDataSerializer.kt     # シリアライザーインターフェース
+│   ├── JsonSerializer.kt           # JSON シリアライザー実装
+│   ├── SensorDataStore.kt          # ストアインターフェース
+│   └── LocalFileStore.kt           # ローカルファイル保存実装
 ├── sensor/
-│   ├── BaseSensorService.kt        # センサー Service の抽象基底クラス
-│   ├── AccelerometerSensorService.kt  # 加速度センサー
-│   ├── HeartRateSensorService.kt      # 心拍数センサー
-│   └── LightSensorService.kt          # 照度センサー
+│   └── SensingService.kt           # センシング Service（3 センサーをまとめて管理）
 ├── presentation/
 │   ├── MainActivity.kt             # メイン画面・Service 制御
 │   └── theme/                      # Compose テーマ (Color / Type / Theme)
@@ -86,12 +98,13 @@ nc -ulp 6666
 
 ```
 MainActivity
-  └─ Start/Stop ──▶ AccelerometerSensorService
-                     HeartRateSensorService
-                     LightSensorService
-                       └─ onSensorChanged()
-                            └─ BaseSensorService.formatMessage()
-                                 └─ UdpSender.send()  ──▶ UDP パケット送信
+  └─ Start/Stop ──▶ SensingService
+                      └─ SensorPipeline
+                           ├─ AccelerometerCollector ─▶ onSensorChanged()
+                           ├─ HeartRateCollector     ─▶ onSensorChanged()
+                           └─ LightCollector         ─▶ onSensorChanged()
+                                └─ JsonSerializer.serialize()
+                                     └─ UdpSender.send()  ──▶ UDP パケット送信
 ```
 
 センサーイベントはバックグラウンドスレッドで UDP 送信されるため、メインスレッドをブロックしません。
