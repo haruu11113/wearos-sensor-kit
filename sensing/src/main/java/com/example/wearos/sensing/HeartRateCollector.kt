@@ -12,7 +12,7 @@ import android.hardware.SensorManager
  * - `android.permission.BODY_SENSORS`（全 API）
  * - `android.permission.health.READ_HEART_RATE`（API 34 以降）
  *
- * いずれかのパーミッションが付与されていない場合、センサーは利用できない。
+ * API 34 以降ではいずれか一方でも未付与の場合、センサーは利用できない。
  */
 class HeartRateCollector(
     context: Context
