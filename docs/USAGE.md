@@ -127,7 +127,9 @@ SensorPipelineConfig(
 )
 ```
 
-### Cloud Firestore に保存する
+### Cloud Firestore に送信する
+
+`FirestoreSender` は `DataSender` の実装です。`sender` に指定してください。
 
 #### 事前準備（利用側アプリ）
 
@@ -158,11 +160,11 @@ SensorPipelineConfig(
         AccelerometerCollector(this),
         HeartRateCollector(this)
     ),
-    store = FirestoreSender(collection = "sensor_data")
+    sender = FirestoreSender(collection = "sensor_data")
 )
 ```
 
-コレクション名は省略可能（デフォルト: `"sensor_data"`）。
+コレクション名・`batchSize` は省略可能（デフォルト: `"sensor_data"` / `20`）。
 
 #### Firestore のドキュメント構造
 
@@ -177,7 +179,7 @@ sensor_data/
 
 #### 注意事項
 
-- `readAll()` / `clear()` は Firestore の非同期 API の性質上サポートしていません（呼ぶと `UnsupportedOperationException`）
+- `batchSize` 件ごとに `WriteBatch` でまとめて送信します（高頻度センサーのクォータ節約）
 - データの参照・削除は Firebase Console または Admin SDK を使ってください
 - Firestore のセキュリティルールは Firebase Console で設定してください
 
