@@ -1,4 +1,4 @@
-package com.example.wearos.storage
+package com.example.wearos.pipeline
 
 import com.example.wearos.sensing.SensorData
 

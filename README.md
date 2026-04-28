@@ -39,11 +39,8 @@ wearos/
 
 | ファイル | 役割 |
 |---------|------|
-| `SensorDataSerializer.kt` | シリアライズインターフェース |
-| `JsonSerializer.kt` | `SensorData` → JSON 文字列 |
 | `SensorDataStore.kt` | 永続化インターフェース |
 | `LocalFileStore.kt` | アプリ内ストレージへの JSONL 追記保存 |
-| `FirestoreStore.kt` | Cloud Firestore への保存（バッチ書き込み対応） |
 
 ### network
 
@@ -51,11 +48,15 @@ wearos/
 |---------|------|
 | `DataSender.kt` | 送信インターフェース |
 | `UdpSender.kt` | UDP 送信実装 |
+| `HttpSender.kt` | HTTP POST 送信実装 |
+| `FirestoreSender.kt` | Cloud Firestore 送信実装（バッチ書き込み対応） |
 
 ### pipeline
 
 | ファイル | 役割 |
 |---------|------|
+| `SensorDataSerializer.kt` | シリアライズインターフェース |
+| `JsonSerializer.kt` | `SensorData` → JSON 文字列 |
 | `SensorPipelineConfig.kt` | collectors / serializer / store / sender をまとめる設定 |
 | `SensorPipeline.kt` | `start()` / `stop()` でフロー全体を制御 |
 
@@ -169,12 +170,12 @@ SensorPipelineConfig(
 )
 ```
 
-### Cloud Firestore に保存する
+### Cloud Firestore に送信する
 
 ```kotlin
 SensorPipelineConfig(
     collectors = listOf(AccelerometerCollector(this)),
-    store = FirestoreStore(collection = "sensor_data", batchSize = 20)
+    sender = FirestoreSender(collection = "sensor_data", batchSize = 20)
 )
 ```
 

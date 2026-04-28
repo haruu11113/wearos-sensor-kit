@@ -23,4 +23,6 @@ android {
 
 dependencies {
     implementation(libs.core.ktx)
+    api(platform(libs.firebase.bom))
+    api(libs.firebase.firestore.ktx)
 }
