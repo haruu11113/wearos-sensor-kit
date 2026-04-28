@@ -117,7 +117,7 @@ pipeline = SensorPipeline(
 )
 ```
 
-### 保存だけ（送信しない）
+### ローカルファイルに保存する（送信しない）
 
 ```kotlin
 SensorPipelineConfig(
@@ -126,6 +126,60 @@ SensorPipelineConfig(
     // sender を省略 → 送信スキップ
 )
 ```
+
+### Cloud Firestore に保存する
+
+#### 事前準備（利用側アプリ）
+
+1. [Firebase Console](https://console.firebase.google.com/) でプロジェクトを作成し、`google-services.json` をアプリモジュールに配置する
+2. アプリの `build.gradle.kts` に Google Services プラグインを追加する:
+
+```kotlin
+// app/build.gradle.kts
+plugins {
+    id("com.google.gms.google-services")
+}
+```
+
+3. ルートの `build.gradle.kts` にもプラグインを追加する:
+
+```kotlin
+// build.gradle.kts (root)
+plugins {
+    id("com.google.gms.google-services") version "4.4.0" apply false
+}
+```
+
+#### 使い方
+
+```kotlin
+SensorPipelineConfig(
+    collectors = listOf(
+        AccelerometerCollector(this),
+        HeartRateCollector(this)
+    ),
+    store = FirestoreStore(collection = "sensor_data")
+)
+```
+
+コレクション名は省略可能（デフォルト: `"sensor_data"`）。
+
+#### Firestore のドキュメント構造
+
+```
+sensor_data/
+  {auto-id}/
+    type:             "accelerometer"
+    values:           [0.12, -9.80, 0.05]
+    timestamp_ns:     123456789
+    server_timestamp: <サーバータイムスタンプ>
+```
+
+#### 注意事項
+
+- `readAll()` / `clear()` は Firestore の非同期 API の性質上サポートしていません（呼ぶと `UnsupportedOperationException`）
+- データの参照・削除は Firebase Console または Admin SDK を使ってください
+- Firestore のセキュリティルールは Firebase Console で設定してください
 
 ### 独自のシリアライザーに差し替える
 
