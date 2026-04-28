@@ -8,8 +8,11 @@ import android.hardware.SensorManager
 /**
  * 心拍数センサーからデータを収集する Collector。
  *
- * **必要なパーミッション:** `android.permission.BODY_SENSORS`
- * このパーミッションが付与されていない場合、センサーは利用できない。
+ * 必要なパーミッション:
+ * - `android.permission.BODY_SENSORS`（全 API）
+ * - `android.permission.health.READ_HEART_RATE`（API 34 以降）
+ *
+ * いずれかのパーミッションが付与されていない場合、センサーは利用できない。
  */
 class HeartRateCollector(
     context: Context

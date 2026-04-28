@@ -32,7 +32,7 @@ wearos/
 | `SensorCollectorListener.kt` | データ受け取りコールバック |
 | `BaseSensorCollector.kt` | SensorManager 登録・解除の抽象基底 |
 | `AccelerometerCollector.kt` | 加速度センサー (`SENSOR_DELAY_GAME`) |
-| `HeartRateCollector.kt` | 心拍数センサー (`SENSOR_DELAY_GAME`、要 `BODY_SENSORS`) |
+| `HeartRateCollector.kt` | 心拍数センサー (`SENSOR_DELAY_GAME`、要 `BODY_SENSORS` / `health.READ_HEART_RATE`（API 34+）) |
 | `LightCollector.kt` | 照度センサー (`SENSOR_DELAY_NORMAL`) |
 
 ### storage
@@ -191,6 +191,7 @@ SensorPipelineConfig(
 |----------------|------|
 | `BODY_SENSORS` | 心拍数センサーへのアクセス（実行時リクエスト） |
 | `BODY_SENSORS_BACKGROUND` | バックグラウンドでの心拍数取得 |
+| `health.READ_HEART_RATE` | 心拍数センサーへのアクセス（API 34 以降、実行時リクエスト） |
 | `INTERNET` | UDP 送信 |
 | `WAKE_LOCK` | センシング中のスリープ抑制 |
 
