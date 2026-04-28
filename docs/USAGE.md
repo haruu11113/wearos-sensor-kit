@@ -190,8 +190,48 @@ SensorPipelineConfig(
 
 #### 事前準備（利用側アプリ）
 
-1. [Firebase Console](https://console.firebase.google.com/) でプロジェクトを作成し、`google-services.json` をアプリモジュールに配置する
-2. アプリの `build.gradle.kts` に Google Services プラグインを追加する:
+**ステップ 1: Firebase プロジェクトを作成し `google-services.json` を配置する**
+
+1. [Firebase Console](https://console.firebase.google.com/) で Firebase プロジェクトを作成する
+2. 「Android アプリを追加」からアプリを登録し、`google-services.json` をダウンロードする
+3. ダウンロードした `google-services.json` を **利用側アプリの `app/` ディレクトリ直下** に配置する
+
+```
+your-app/
+├── app/
+│   ├── google-services.json   ← ここに配置
+│   └── src/
+├── libs/
+│   └── wearos/
+└── settings.gradle.kts
+```
+
+> **注意**: `google-services.json` には Firebase プロジェクトの認証情報が含まれます。
+> リポジトリにコミットしないよう、利用側アプリの `.gitignore` に追加してください。
+> CI/CD 環境では GitHub Secrets などの仕組みでファイルを注入してください。
+
+`.gitignore` への追加例:
+
+```
+# Firebase
+app/google-services.json
+```
+
+CI/CD（GitHub Actions）での注入例:
+
+```yaml
+- name: Write google-services.json
+  run: echo "${{ secrets.GOOGLE_SERVICES_JSON }}" > app/google-services.json
+```
+
+**ステップ 2: Google Services プラグインを追加する**
+
+```kotlin
+// build.gradle.kts (root)
+plugins {
+    id("com.google.gms.google-services") version "4.4.0" apply false
+}
+```
 
 ```kotlin
 // app/build.gradle.kts
@@ -200,12 +240,19 @@ plugins {
 }
 ```
 
-3. ルートの `build.gradle.kts` にもプラグインを追加する:
+**ステップ 3: Firestore のセキュリティルールを設定する**
 
-```kotlin
-// build.gradle.kts (root)
-plugins {
-    id("com.google.gms.google-services") version "4.4.0" apply false
+Firebase Console の「Firestore Database」→「ルール」で、書き込みを許可するルールを設定してください。
+開発中は以下のルールで動作確認できますが、本番環境では適切に制限してください。
+
+```
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /{document=**} {
+      allow read, write: if true;  // 開発用。本番では適切に制限すること
+    }
+  }
 }
 ```
 
@@ -225,6 +272,8 @@ SensorPipelineConfig(
 
 #### Firestore のドキュメント構造
 
+送信されたデータは以下の形式で Firestore に保存されます。
+
 ```
 sensor_data/
   {auto-id}/
@@ -234,11 +283,16 @@ sensor_data/
     server_timestamp: <サーバータイムスタンプ>
 ```
 
+- `type`: センサーの種類（`"accelerometer"`, `"heart_rate"` など）
+- `values`: センサー値の配列
+- `timestamp_ns`: デバイス側のナノ秒タイムスタンプ
+- `server_timestamp`: Firestore サーバーが記録したタイムスタンプ
+
 #### 注意事項
 
 - `batchSize` 件ごとに `WriteBatch` でまとめて送信します（高頻度センサーのクォータ節約）
+- `pipeline.stop()` 呼び出し時にバッファの残データをフラッシュします。`stop()` を省略するとデータが失われる可能性があります
 - データの参照・削除は Firebase Console または Admin SDK を使ってください
-- Firestore のセキュリティルールは Firebase Console で設定してください
 
 ### 独自のシリアライザーに差し替える
 
