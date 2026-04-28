@@ -62,8 +62,31 @@ dependencies {
 ```xml
 <uses-permission android:name="android.permission.BODY_SENSORS" />
 <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
+<!-- WearOS 4 (API 34+) で HeartRateCollector を使う場合は追加 -->
+<uses-permission android:name="android.permission.health.READ_HEART_RATE" />
 <uses-permission android:name="android.permission.INTERNET" />
 <uses-permission android:name="android.permission.WAKE_LOCK" />
+```
+
+---
+
+## 実行時パーミッションのリクエスト
+
+マニフェストへの宣言に加え、`BODY_SENSORS`（および API 34 以降では `health.READ_HEART_RATE`）は実行時にもリクエストが必要です。
+
+```kotlin
+import android.Manifest
+import android.os.Build
+
+// API 34 以降は health.READ_HEART_RATE の実行時リクエストが必要
+val permissions = buildList {
+    add(Manifest.permission.BODY_SENSORS)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        add("android.permission.health.READ_HEART_RATE")
+    }
+}.toTypedArray()
+
+// ActivityResultContracts.RequestMultiplePermissions などで上記をリクエストしてください
 ```
 
 ---
@@ -108,7 +131,7 @@ pipeline = SensorPipeline(
     SensorPipelineConfig(
         collectors = listOf(
             AccelerometerCollector(this),
-            HeartRateCollector(this),   // 要 BODY_SENSORS パーミッション
+            HeartRateCollector(this),   // 要 BODY_SENSORS + health.READ_HEART_RATE (API 34+) パーミッション
             LightCollector(this)
         ),
         store  = LocalFileStore(this),              // JSON をローカルに保存
