@@ -1,4 +1,4 @@
-package com.example.wearos.storage
+package com.example.wearos.network
 
 import android.util.Log
 import com.google.firebase.firestore.FieldValue
@@ -7,7 +7,7 @@ import com.google.firebase.firestore.WriteBatch
 import org.json.JSONObject
 
 /**
- * SensorData を Cloud Firestore に保存する SensorDataStore 実装。
+ * センサーデータを Cloud Firestore に送信する DataSender 実装。
  *
  * **前提条件（利用側アプリ）:**
  * - `google-services.json` をアプリモジュールに配置すること
@@ -23,18 +23,15 @@ import org.json.JSONObject
  *     server_timestamp: <Firestore サーバータイムスタンプ>
  * ```
  *
- * @param collection 保存先の Firestore コレクション名（デフォルト: "sensor_data"）
+ * @param collection 送信先の Firestore コレクション名（デフォルト: "sensor_data"）
  * @param batchSize  この件数ごとに WriteBatch でまとめて書き込む（デフォルト: 20）。
  *                   高頻度センサー（SENSOR_DELAY_GAME）では 1 イベント = 1 書き込みだと
  *                   Firestore クォータを大量消費するため、まとめて書き込むことを推奨する。
- *                   [stop] を呼ぶと未送信のバッファも強制フラッシュされる。
- *
- * **注意:** [readAll] と [clear] は Firestore の非同期 API の性質上サポートしていない。
  */
-class FirestoreStore(
+class FirestoreSender(
     private val collection: String = "sensor_data",
     private val batchSize: Int = 20
-) : SensorDataStore {
+) : DataSender {
 
     private val db: FirebaseFirestore = FirebaseFirestore.getInstance()
 
@@ -52,9 +49,9 @@ class FirestoreStore(
 
     private val buffer = mutableListOf<Map<String, Any>>()
 
-    override fun save(serialized: String) {
+    override fun send(payload: String) {
         try {
-            val json = JSONObject(serialized)
+            val json = JSONObject(payload)
             val valuesArray = json.getJSONArray("values")
             val values = (0 until valuesArray.length()).map { valuesArray.getDouble(it) }
 
@@ -70,12 +67,11 @@ class FirestoreStore(
                 if (buffer.size >= batchSize) flush()
             }
         } catch (e: Exception) {
-            Log.e("FirestoreStore", "Failed to parse sensor data: ${e.message}", e)
+            Log.e("FirestoreSender", "Failed to parse sensor data: ${e.message}", e)
         }
     }
 
-    /** センシング停止時に呼ぶ。バッファに残った未送信データを強制フラッシュする。 */
-    fun stop() {
+    override fun onStop() {
         synchronized(buffer) { flush() }
     }
 
@@ -87,21 +83,7 @@ class FirestoreStore(
         }
         buffer.clear()
         batch.commit().addOnFailureListener { e ->
-            Log.e("FirestoreStore", "Failed to commit batch: ${e.message}", e)
+            Log.e("FirestoreSender", "Failed to commit batch: ${e.message}", e)
         }
-    }
-
-    override fun readAll(): List<String> {
-        throw UnsupportedOperationException(
-            "FirestoreStore does not support synchronous readAll(). " +
-            "Use the configured Firestore instance to read from collection \"$collection\" asynchronously."
-        )
-    }
-
-    override fun clear() {
-        throw UnsupportedOperationException(
-            "FirestoreStore does not support clear(). " +
-            "Delete documents directly via the Firebase Console or Admin SDK."
-        )
     }
 }

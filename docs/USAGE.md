@@ -158,7 +158,7 @@ SensorPipelineConfig(
         AccelerometerCollector(this),
         HeartRateCollector(this)
     ),
-    store = FirestoreStore(collection = "sensor_data")
+    store = FirestoreSender(collection = "sensor_data")
 )
 ```
 
