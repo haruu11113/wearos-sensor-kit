@@ -43,6 +43,7 @@ wearos/
 | `JsonSerializer.kt` | `SensorData` → JSON 文字列 |
 | `SensorDataStore.kt` | 永続化インターフェース |
 | `LocalFileStore.kt` | アプリ内ストレージへの JSONL 追記保存 |
+| `FirestoreStore.kt` | Cloud Firestore への保存（バッチ書き込み対応） |
 
 ### network
 
@@ -167,6 +168,19 @@ SensorPipelineConfig(
     sender = HttpSender("https://example.com/api/sensor")
 )
 ```
+
+### Cloud Firestore に保存する
+
+```kotlin
+SensorPipelineConfig(
+    collectors = listOf(AccelerometerCollector(this)),
+    store = FirestoreStore(collection = "sensor_data", batchSize = 20)
+)
+```
+
+`batchSize` 件ごとに `WriteBatch` でまとめて書き込みます（デフォルト 20）。
+利用側アプリに `google-services.json` の配置と Google Services プラグインの設定が必要です。
+詳細セットアップ手順 → [docs/USAGE.md](docs/USAGE.md)
 
 コード例の詳細 → [docs/USAGE.md](docs/USAGE.md)
 
