@@ -25,27 +25,72 @@
 
 ---
 
-## フェーズ2：新センサ追加
+## フェーズ2：新センサ追加（完了）
 
 | # | issue | 状態 |
 |---|-------|------|
-| [017](017-add-sensor-type-constants.md) | `SensorData` に新センサの TYPE 定数を追加（**先行必須**） | 🔲 未着手 |
-| [018](018-implement-gyroscope-collector.md) | `GyroscopeCollector` の実装 | 🔲 未着手 |
-| [019](019-implement-magnetic-field-collector.md) | `MagneticFieldCollector` の実装 | 🔲 未着手 |
-| [020](020-implement-rotation-vector-collector.md) | `RotationVectorCollector` の実装 | 🔲 未着手 |
-| [021](021-implement-step-counter-collector.md) | `StepCounterCollector` の実装 | 🔲 未着手 |
-| [022](022-implement-step-detector-collector.md) | `StepDetectorCollector` の実装 | 🔲 未着手 |
-| [023](023-implement-gravity-collector.md) | `GravityCollector` の実装 | 🔲 未着手 |
-| [024](024-implement-linear-acceleration-collector.md) | `LinearAccelerationCollector` の実装 | 🔲 未着手 |
-| [025](025-implement-pressure-collector.md) | `PressureCollector` の実装 | 🔲 未着手 |
-| [026](026-implement-heart-beat-collector.md) | `HeartBeatCollector` の実装（RRI/HRV 用） | 🔲 未着手 |
-| [027](027-implement-oxygen-saturation-collector.md) | `OxygenSaturationCollector` の実装（SpO2） | 🔲 未着手 |
-| [028](028-implement-skin-temperature-collector.md) | `SkinTemperatureCollector` の実装（Pixel Watch 2 固有） | 🔲 未着手 |
-| [029](029-implement-off-body-detect-collector.md) | `OffBodyDetectCollector` の実装 | 🔲 未着手 |
-| [030](030-update-usage-docs-new-sensors.md) | `USAGE.md` に新センサの使い方を追記（**018〜029 完了後**） | 🔲 未着手 |
+| [017](done/017-add-sensor-type-constants.md) | `SensorData` に新センサの TYPE 定数を追加 | ✅ 完了 |
+| [018](done/018-implement-gyroscope-collector.md) | `GyroscopeCollector` の実装 | ✅ 完了 |
+| [019](done/019-implement-magnetic-field-collector.md) | `MagneticFieldCollector` の実装 | ✅ 完了 |
+| [020](done/020-implement-rotation-vector-collector.md) | `RotationVectorCollector` の実装 | ✅ 完了 |
+| [021](done/021-implement-step-counter-collector.md) | `StepCounterCollector` の実装 | ✅ 完了 |
+| [022](done/022-implement-step-detector-collector.md) | `StepDetectorCollector` の実装 | ✅ 完了 |
+| [023](done/023-implement-gravity-collector.md) | `GravityCollector` の実装 | ✅ 完了 |
+| [024](done/024-implement-linear-acceleration-collector.md) | `LinearAccelerationCollector` の実装 | ✅ 完了 |
+| [025](done/025-implement-pressure-collector.md) | `PressureCollector` の実装 | ✅ 完了 |
+| [026](done/026-implement-heart-beat-collector.md) | `HeartBeatCollector` の実装（RRI/HRV 用） | ✅ 完了 |
+| [027](done/027-implement-oxygen-saturation-collector.md) | `OxygenSaturationCollector` の実装（SpO2） | ✅ 完了 |
+| [028](done/028-implement-skin-temperature-collector.md) | `SkinTemperatureCollector` の実装（Pixel Watch 2 固有） | ✅ 完了 |
+| [029](done/029-implement-off-body-detect-collector.md) | `OffBodyDetectCollector` の実装 | ✅ 完了 |
+| [030](done/030-update-usage-docs-new-sensors.md) | `USAGE.md` に新センサの使い方を追記 | ✅ 完了 |
+
+---
+
+## フェーズ3：アーキテクチャ刷新
+
+### 設計方針
+
+- `SensorPipelineConfig` を廃止し `SensorPipelineFactory` に一本化
+- `SensorConsumer` インターフェースで Store / Sender / ML 推論を統一
+- `SyncJob` で Store-and-Forward パターンを実現
+- `SensorDataStore` に ID ベースの部分削除を追加
+- `SQLiteStore` を新規追加（store-and-forward 向け）
+
+### タスク一覧
+
+| # | issue | 状態 | 依存 |
+|---|-------|------|------|
+| [031](031-define-sensor-consumer-interface.md) | `SensorConsumer` インターフェースの定義（**先行必須**） | 🔲 未着手 | - |
+| [035](035-update-sensor-data-store-interface.md) | `SensorDataStore` インターフェースの更新（**先行必須**） | 🔲 未着手 | - |
+| [032](032-implement-store-consumer.md) | `StoreConsumer` の実装 | 🔲 未着手 | 031・035 |
+| [033](033-implement-sender-consumer.md) | `SenderConsumer` の実装 | 🔲 未着手 | 031 |
+| [036](036-update-local-file-store.md) | `LocalFileStore` の更新 | 🔲 未着手 | 035 |
+| [037](037-implement-sqlite-store.md) | `SQLiteStore` の新規実装 | 🔲 未着手 | 035 |
+| [034](034-refactor-sensor-pipeline.md) | `SensorPipeline` のリファクタリング・`SensorPipelineConfig` 削除 | 🔲 未着手 | 031・032・033 |
+| [038](038-implement-sync-job.md) | `SyncJob` の実装 | 🔲 未着手 | 035 |
+| [039](039-implement-sensor-pipeline-factory.md) | `SensorPipelineFactory` の実装（**最後**） | 🔲 未着手 | 031〜038 |
+| [040](040-update-usage-docs-new-architecture.md) | `USAGE.md` を新アーキテクチャに合わせて更新 | 🔲 未着手 | 039 |
 
 ### 並列作業の進め方
 
-1. **017 を単独で先に完了させる**（他全てが `SensorData` の定数に依存するため）
-2. **018〜029 は完全並列**（各自が新規ファイル1つを作成するだけ。コンフリクトなし）
-3. **030 は 018〜029 完了後**にまとめてドキュメント更新
+```
+ステップ1（並列可）
+  031: SensorConsumer I/F 定義
+  035: SensorDataStore I/F 更新
+
+ステップ2（031・035 完了後、並列可）
+  032: StoreConsumer
+  033: SenderConsumer
+  036: LocalFileStore 更新
+  037: SQLiteStore 新規実装
+  038: SyncJob
+
+ステップ3（ステップ2 完了後）
+  034: SensorPipeline リファクタ・SensorPipelineConfig 削除
+
+ステップ4（034・038 完了後）
+  039: SensorPipelineFactory
+
+ステップ5（039 完了後）
+  040: USAGE.md 更新
+```
