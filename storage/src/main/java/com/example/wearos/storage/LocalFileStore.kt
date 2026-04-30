@@ -13,23 +13,25 @@ class LocalFileStore(
     private val file: File
         get() = File(context.filesDir, fileName)
 
-    override fun save(serialized: String) {
-        BufferedWriter(FileWriter(file, true)).use { writer ->
-            writer.write(serialized)
-            writer.newLine()
-        }
+    override fun save(data: String): Long {
+        BufferedWriter(FileWriter(file, true)).use { it.write(data); it.newLine() }
+        return file.readLines().size.toLong()
     }
 
-    override fun readAll(): List<String> {
+    override fun readAll(): List<Pair<Long, String>> {
         if (!file.exists()) return emptyList()
-        return file.bufferedReader(Charsets.UTF_8).useLines { lines ->
-            lines.filter { it.isNotEmpty() }.toList()
-        }
+        return file.readLines()
+            .mapIndexedNotNull { index, line ->
+                if (line.isNotEmpty()) Pair(index + 1L, line) else null
+            }
     }
 
-    override fun clear() {
-        if (file.exists()) {
-            file.delete()
-        }
+    override fun delete(ids: List<Long>) {
+        if (!file.exists()) return
+        val remaining = file.readLines()
+            .mapIndexedNotNull { index, line ->
+                if ((index + 1L) !in ids) line else null
+            }
+        file.writeText(remaining.joinToString("\n") + if (remaining.isNotEmpty()) "\n" else "")
     }
 }
