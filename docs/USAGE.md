@@ -118,77 +118,33 @@ val permissions = buildList {
 ### 最小構成（加速度 + UDP 送信）
 
 ```kotlin
-import com.example.wearos.pipeline.SensorPipeline
-import com.example.wearos.pipeline.SensorPipelineConfig
-import com.example.wearos.sensing.AccelerometerCollector
-import com.example.wearos.network.UdpSender
+val factory = SensorPipelineFactory(context)
 
-class MySensingService : Service() {
-    private lateinit var pipeline: SensorPipeline
-
-    override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        pipeline = SensorPipeline(
-            SensorPipelineConfig(
-                collectors = listOf(AccelerometerCollector(this)),
-                sender = UdpSender("192.168.1.100", 6666)
-            )
-        )
-        pipeline.start()
-        return START_STICKY
-    }
-
-    override fun onDestroy() {
-        pipeline.stop()
-        super.onDestroy()
-    }
-
-    override fun onBind(intent: Intent?) = null
-}
-```
-
-### 全センサー + ローカル保存 + UDP 送信
-
-```kotlin
-pipeline = SensorPipeline(
-    SensorPipelineConfig(
-        collectors = listOf(
-            AccelerometerCollector(this),
-            GyroscopeCollector(this),
-            MagneticFieldCollector(this),
-            RotationVectorCollector(this),
-            GravityCollector(this),
-            LinearAccelerationCollector(this),
-            StepCounterCollector(this),
-            StepDetectorCollector(this),
-            PressureCollector(this),
-            HeartRateCollector(this),          // 要 BODY_SENSORS
-            HeartBeatCollector(this),          // 要 BODY_SENSORS
-            OxygenSaturationCollector(this),   // 要 BODY_SENSORS
-            SkinTemperatureCollector(this),    // 要 BODY_SENSORS、Pixel Watch 2 固有
-            LightCollector(this),
-            OffBodyDetectCollector(this)
-        ),
-        store  = LocalFileStore(this),              // JSON をローカルに保存
-        sender = UdpSender("192.168.1.100", 6666)  // UDP で送信
-    )
-)
-```
-
-### ローカルファイルに保存する（送信しない）
-
-```kotlin
-SensorPipelineConfig(
+val pipeline = factory.buildPipeline(
     collectors = listOf(AccelerometerCollector(this)),
-    store = LocalFileStore(this)
-    // sender を省略 → 送信スキップ
+    consumers  = listOf(factory.senderConsumer(UdpSender("192.168.1.100", 6666)))
 )
+pipeline.start()
 ```
 
-### Cloud Firestore に送信する
+### Store に蓄積 → あとで Firestore に送信
 
-`FirestoreSender` は `DataSender` の実装です。`sender` に指定してください。
+```kotlin
+val factory = SensorPipelineFactory(context)
 
-#### 事前準備（利用側アプリ）
+// 収集：常時 Store に保存
+val pipeline = factory.buildPipeline(
+    collectors = listOf(AccelerometerCollector(this)),
+    consumers  = listOf(factory.storeConsumer())
+)
+pipeline.start()
+
+// 送信：任意のタイミングで呼ぶ
+val syncJob = factory.buildSyncJob(FirestoreSender())
+syncJob.execute()
+```
+
+#### Cloud Firestore の事前準備（利用側アプリ）
 
 **ステップ 1: Firebase プロジェクトを作成し `google-services.json` を配置する**
 
@@ -256,20 +212,6 @@ service cloud.firestore {
 }
 ```
 
-#### 使い方
-
-```kotlin
-SensorPipelineConfig(
-    collectors = listOf(
-        AccelerometerCollector(this),
-        HeartRateCollector(this)
-    ),
-    sender = FirestoreSender(collection = "sensor_data")
-)
-```
-
-コレクション名・`batchSize` は省略可能（デフォルト: `"sensor_data"` / `20`）。
-
 #### Firestore のドキュメント構造
 
 送信されたデータは以下の形式で Firestore に保存されます。
@@ -290,56 +232,50 @@ sensor_data/
 
 #### 注意事項
 
-- `batchSize` 件ごとに `WriteBatch` でまとめて送信します（高頻度センサーのクォータ節約）
 - `pipeline.stop()` 呼び出し時にバッファの残データをフラッシュします。`stop()` を省略するとデータが失われる可能性があります
 - データの参照・削除は Firebase Console または Admin SDK を使ってください
 
-### 独自のシリアライザーに差し替える
+### Store 蓄積 + オンデバイス推論
 
 ```kotlin
-class CsvSerializer : SensorDataSerializer {
-    override fun serialize(data: SensorData): String =
-        "${data.type},${data.values.joinToString(",")},${data.timestampNs}"
-}
+val factory = SensorPipelineFactory(context)
 
-SensorPipelineConfig(
-    collectors = listOf(AccelerometerCollector(this)),
-    serializer = CsvSerializer(),
-    sender = UdpSender("192.168.1.100", 6666)
+val pipeline = factory.buildPipeline(
+    collectors = listOf(AccelerometerCollector(this), GyroscopeCollector(this)),
+    consumers  = listOf(
+        factory.storeConsumer(),
+        ActivityRecognizer(model)   // 利用側が実装
+    )
 )
+pipeline.start()
 ```
 
-### HTTP で送信する
+### 独自 Consumer の実装例
 
-`HttpSender` はライブラリに組み込み済みです。URL を渡すだけで使えます。
+`SensorConsumer` を実装すれば MQTT・WebSocket・ML モデルなど任意の処理を追加できます。
 
 ```kotlin
-SensorPipelineConfig(
+class MyConsumer : SensorConsumer {
+    override fun onData(data: SensorData) {
+        // 好きな処理
+    }
+}
+```
+
+HTTP で送信したい場合は `HttpSender` を `SenderConsumer` に渡してください。
+
+```kotlin
+val factory = SensorPipelineFactory(context)
+
+val pipeline = factory.buildPipeline(
     collectors = listOf(AccelerometerCollector(this)),
-    sender = HttpSender("https://example.com/api/sensor")
+    consumers  = listOf(factory.senderConsumer(HttpSender("https://example.com/api/sensor")))
 )
 ```
 
 - `Content-Type: application/json` で POST します
 - タイムアウトは接続・読み取りともに 5000ms
 - 非 2xx レスポンスは `Log.w` で警告、例外は `Log.e` で記録してクラッシュしません
-
-### 独自の送信先に差し替える
-
-`DataSender` を実装すれば MQTT・WebSocket など任意のプロトコルに対応できます。
-
-```kotlin
-class MqttSender(private val topic: String) : DataSender {
-    override fun send(payload: String) {
-        // MQTT publish など
-    }
-}
-
-SensorPipelineConfig(
-    collectors = listOf(AccelerometerCollector(this)),
-    sender = MqttSender("sensors/accelerometer")
-)
-```
 
 ---
 
