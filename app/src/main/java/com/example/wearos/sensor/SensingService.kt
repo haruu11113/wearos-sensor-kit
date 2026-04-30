@@ -4,8 +4,8 @@ import android.app.Service
 import android.content.Intent
 import android.os.IBinder
 import com.example.wearos.network.UdpSender
+import com.example.wearos.pipeline.SenderConsumer
 import com.example.wearos.pipeline.SensorPipeline
-import com.example.wearos.pipeline.SensorPipelineConfig
 import com.example.wearos.sensing.AccelerometerCollector
 import com.example.wearos.sensing.HeartRateCollector
 import com.example.wearos.sensing.LightCollector
@@ -29,15 +29,15 @@ class SensingService : Service() {
             null
         }
 
-        val config = SensorPipelineConfig(
-            collectors = listOf(
-                AccelerometerCollector(this),
-                HeartRateCollector(this),
-                LightCollector(this)
-            ),
-            sender = sender
+        val collectors = listOf(
+            AccelerometerCollector(this),
+            HeartRateCollector(this),
+            LightCollector(this)
         )
-        pipeline = SensorPipeline(config)
+        val consumers = listOfNotNull(
+            sender?.let { SenderConsumer(it) }
+        )
+        pipeline = SensorPipeline(collectors, consumers)
         pipeline.start()
         return START_STICKY
     }
