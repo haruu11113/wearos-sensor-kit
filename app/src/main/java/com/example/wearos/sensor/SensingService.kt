@@ -7,8 +7,20 @@ import com.example.wearos.network.UdpSender
 import com.example.wearos.pipeline.SenderConsumer
 import com.example.wearos.pipeline.SensorPipeline
 import com.example.wearos.sensing.AccelerometerCollector
+import com.example.wearos.sensing.GravityCollector
+import com.example.wearos.sensing.GyroscopeCollector
+import com.example.wearos.sensing.HeartBeatCollector
 import com.example.wearos.sensing.HeartRateCollector
 import com.example.wearos.sensing.LightCollector
+import com.example.wearos.sensing.LinearAccelerationCollector
+import com.example.wearos.sensing.MagneticFieldCollector
+import com.example.wearos.sensing.OffBodyDetectCollector
+import com.example.wearos.sensing.OxygenSaturationCollector
+import com.example.wearos.sensing.PressureCollector
+import com.example.wearos.sensing.RotationVectorCollector
+import com.example.wearos.sensing.SkinTemperatureCollector
+import com.example.wearos.sensing.StepCounterCollector
+import com.example.wearos.sensing.StepDetectorCollector
 
 class SensingService : Service() {
 
@@ -31,8 +43,20 @@ class SensingService : Service() {
 
         val collectors = listOf(
             AccelerometerCollector(this),
+            GyroscopeCollector(this),
+            MagneticFieldCollector(this),
+            RotationVectorCollector(this),
+            GravityCollector(this),
+            LinearAccelerationCollector(this),
+            StepCounterCollector(this),
+            StepDetectorCollector(this),
+            PressureCollector(this),
             HeartRateCollector(this),
-            LightCollector(this)
+            HeartBeatCollector(this),
+            OxygenSaturationCollector(this),
+            SkinTemperatureCollector(this),
+            LightCollector(this),
+            OffBodyDetectCollector(this)
         )
         val consumers = listOfNotNull(
             sender?.let { SenderConsumer(it) }

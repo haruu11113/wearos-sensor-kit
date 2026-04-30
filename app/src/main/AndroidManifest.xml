@@ -5,18 +5,13 @@
     <uses-feature android:name="android.hardware.type.watch" />
 
     <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <!-- ここにパーミッションを配置 -->
     <uses-permission android:name="android.permission.BODY_SENSORS" />
     <uses-permission android:name="android.permission.BODY_SENSORS_BACKGROUND" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <!-- 他のパーミッションがあればここに追加 -->
+    <!-- API 34+ (WearOS 4) で心拍・SpO2・皮膚温度に必要 -->
+    <uses-permission android:name="android.permission.health.READ_HEART_RATE" />
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WAKE_LOCK" />
-    <uses-permission android:name="android.permission.SENSOR_PERMISSION_BODY_SENSORS" />
-    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
-    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
 
     <application

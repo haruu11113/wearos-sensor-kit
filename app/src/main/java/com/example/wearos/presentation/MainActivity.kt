@@ -1,8 +1,10 @@
 package com.example.wearos.presentation
 
 import android.Manifest
+import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.os.Build
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.rememberLauncherForActivityResult
@@ -17,7 +19,6 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.tooling.preview.Devices
 import androidx.compose.ui.tooling.preview.Preview
@@ -25,7 +26,6 @@ import androidx.core.content.ContextCompat
 import androidx.wear.compose.material.Button
 import androidx.wear.compose.material.MaterialTheme
 import androidx.wear.compose.material.Text
-import com.example.wearos.R
 import com.example.wearos.presentation.theme.WearosTheme
 import com.example.wearos.sensor.SensingService
 
@@ -38,21 +38,26 @@ class MainActivity : ComponentActivity() {
     }
 }
 
+private fun requiredPermissions(): Array<String> = buildList {
+    add(Manifest.permission.BODY_SENSORS)
+    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.UPSIDE_DOWN_CAKE) {
+        add("android.permission.health.READ_HEART_RATE")
+    }
+}.toTypedArray()
+
+private fun Context.hasAllPermissions(): Boolean =
+    requiredPermissions().all {
+        ContextCompat.checkSelfPermission(this, it) == PackageManager.PERMISSION_GRANTED
+    }
+
 @Composable
 fun WearApp(greetingName: String) {
     val context = LocalContext.current
-    var hasBodySensorsPermission by remember {
-        mutableStateOf(
-            ContextCompat.checkSelfPermission(
-                context,
-                Manifest.permission.BODY_SENSORS
-            ) == PackageManager.PERMISSION_GRANTED
-        )
-    }
+    var hasPermissions by remember { mutableStateOf(context.hasAllPermissions()) }
     val launcher = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { isGranted: Boolean ->
-        hasBodySensorsPermission = isGranted
+        ActivityResultContracts.RequestMultiplePermissions()
+    ) { results ->
+        hasPermissions = results.values.all { it }
     }
 
     val udpAddress = "192.168.50.236" // Replace with your desired IP address
@@ -66,7 +71,7 @@ fun WearApp(greetingName: String) {
             verticalArrangement = Arrangement.Center,
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            if (hasBodySensorsPermission) {
+            if (hasPermissions) {
                 var isSensing by remember { mutableStateOf(false) }
 
                 Greeting(greetingName = if (isSensing) "Sensing..." else "Tap to start sensor")
@@ -87,7 +92,7 @@ fun WearApp(greetingName: String) {
             } else {
                 Greeting(greetingName = "Tap to request permission")
                 Button(onClick = {
-                    launcher.launch(Manifest.permission.BODY_SENSORS)
+                    launcher.launch(requiredPermissions())
                 }) {
                     Text("Request Permission")
                 }
