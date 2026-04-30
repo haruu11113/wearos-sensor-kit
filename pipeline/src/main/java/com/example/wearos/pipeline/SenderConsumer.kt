@@ -13,7 +13,7 @@ class SenderConsumer(
         sender.send(serialized)
     }
 
-    fun onStop() {
+    override fun onStop() {
         sender.onStop()
     }
 }

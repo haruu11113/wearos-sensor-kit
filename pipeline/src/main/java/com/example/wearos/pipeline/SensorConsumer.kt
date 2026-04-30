@@ -4,4 +4,5 @@ import com.example.wearos.sensing.SensorData
 
 interface SensorConsumer {
     fun onData(data: SensorData)
+    fun onStop() {}
 }

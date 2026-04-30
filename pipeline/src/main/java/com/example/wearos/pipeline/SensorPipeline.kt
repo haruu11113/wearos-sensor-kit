@@ -19,6 +19,6 @@ class SensorPipeline(
 
     fun stop() {
         collectors.forEach { it.stop() }
-        consumers.filterIsInstance<SenderConsumer>().forEach { it.onStop() }
+        consumers.forEach { it.onStop() }
     }
 }
