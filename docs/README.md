@@ -54,29 +54,19 @@ interface SensorCollectorListener {
 
 ---
 
-### storage — JSON ローカル保存
+### storage — ローカル保存
 
-**責務**: `SensorData` を JSON にシリアライズしてファイルに書き込む。取得方法も送信方法も知らない。
+**責務**: `SensorData` を JSON 文字列としてローカルに保存する。取得方法も送信方法も知らない。
 
 ```
 storage/src/main/java/com/example/wearos/storage/
-├── SensorDataSerializer.kt  インターフェース: serialize(data): String
-├── JsonSerializer.kt        実装: JSON 文字列を返す（org.json 使用）
-├── SensorDataStore.kt       インターフェース: save / readAll / clear
-└── LocalFileStore.kt        実装: アプリ内ストレージへ JSONL 追記
+├── SensorDataStore.kt   インターフェース: save(String):Long / readAll() / delete(List<Long>)
+├── LocalFileStore.kt    実装: アプリ内ストレージへ JSONL 追記
+└── SQLiteStore.kt       実装: SQLite による保存（store-and-forward 向け、デフォルト）
 ```
 
-出力 JSON:
-
-```json
-{
-  "type": "accelerometer",
-  "values": [0.12, -9.80, 0.05],
-  "timestamp_ns": 123456789
-}
-```
-
-`LocalFileStore` は 1 レコード = 1 行の JSONL 形式で保存する。
+`SQLiteStore` は AUTOINCREMENT の ID を持つため、高頻度書き込み中でも安全な部分削除が可能。
+`LocalFileStore` は行番号を ID として扱うシンプルな実装（書き捨て用途向け）。
 
 ---
 
@@ -86,64 +76,65 @@ storage/src/main/java/com/example/wearos/storage/
 
 ```
 network/src/main/java/com/example/wearos/network/
-├── DataSender.kt   インターフェース: send(payload: String)
-└── UdpSender.kt    実装: UDP 送信（DatagramSocket）
+├── DataSender.kt      インターフェース: send(payload: String)
+├── UdpSender.kt       実装: UDP 送信（DatagramSocket）
+├── HttpSender.kt      実装: HTTP POST 送信
+└── FirestoreSender.kt 実装: Cloud Firestore バッチ書き込み
 ```
 
 `UdpSender` はコンストラクタで `address` と `port` を受け取る。IP のハードコードなし。
-将来的に `HttpSender` や `MqttSender` を追加しても `DataSender` を実装するだけでよい。
+`DataSender` を実装するだけで任意の送信先を追加できる。
 
 ---
 
 ### pipeline — 配線層
 
-**責務**: sensing → storage → network を組み合わせる。アプリ側が差し替え可能な構成を渡す。
+**責務**: sensing / storage / network を組み合わせる。`SensorConsumer` インターフェースで処理を統一し、Store / Sender / ML 推論など任意の Consumer をリストで追加できる。
 
 ```
 pipeline/src/main/java/com/example/wearos/pipeline/
-├── SensorPipelineConfig.kt  設定 data class
-└── SensorPipeline.kt        start() / stop() でフロー全体を制御
+├── SensorDataSerializer.kt   インターフェース: serialize(SensorData): String
+├── JsonSerializer.kt         実装: JSON 文字列を返す
+├── SensorConsumer.kt         インターフェース: onData(SensorData) / onStop()
+├── StoreConsumer.kt          Consumer → SensorDataStore へ非同期保存
+├── SenderConsumer.kt         Consumer → DataSender へ非同期送信
+├── SensorPipeline.kt         start() / stop() でフロー全体を制御
+├── SyncJob.kt                Store 蓄積データを Sender へ一括転送（store-and-forward）
+└── SensorPipelineFactory.kt  Pipeline / SyncJob を組み立てるファクトリ
 ```
 
 ```kotlin
-data class SensorPipelineConfig(
-    val collectors: List<BaseSensorCollector>,
-    val serializer: SensorDataSerializer = JsonSerializer(),
-    val store: SensorDataStore? = null,   // null なら保存スキップ
-    val sender: DataSender? = null        // null なら送信スキップ
+// SensorPipelineFactory が組み立てを担う
+val factory = SensorPipelineFactory(context)  // デフォルト store は SQLiteStore
+
+val pipeline = factory.buildPipeline(
+    collectors = listOf(AccelerometerCollector(context)),
+    consumers  = listOf(factory.storeConsumer())   // 独自 Consumer も追加可
 )
+pipeline.start()
+
+// store-and-forward: 任意タイミングで送信
+factory.buildSyncJob(UdpSender("192.168.1.100", 6666)).execute()
 ```
 
-`SensorPipeline` 内部では送信を `Executors.newSingleThreadExecutor()` でバックグラウンド実行する。
+`StoreConsumer` / `SenderConsumer` はそれぞれ `newSingleThreadExecutor` でバックグラウンド実行し、`onStop()` でシャットダウンを待機する。
 
 ---
 
 ### app — サンプルアプリ
 
-`SensingService` が `SensorPipeline` を生成・保持する薄いラッパー Service。
-Intent の extras で UDP 送信先を渡す設計にしてあるため、送信先をアプリ外から変更できる。
-
-```kotlin
-// MainActivity.kt
-context.startService(Intent(context, SensingService::class.java).apply {
-    putExtra(SensingService.EXTRA_UDP_ADDRESS, "192.168.1.100")
-    putExtra(SensingService.EXTRA_UDP_PORT, 6666)
-})
-```
-
----
-
-## Android Service との関係
-
-Service は UI 層の責務なのでライブラリ本体（sensing / storage / network / pipeline）には含めない。
-アプリ側で薄いラッパー Service を書いて Pipeline を内部で使う。
+`SensingService` が `SensorPipelineFactory` を使って Pipeline を生成・保持する薄いラッパー Service。
 
 ```kotlin
 class MySensingService : Service() {
     private lateinit var pipeline: SensorPipeline
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        pipeline = SensorPipeline(SensorPipelineConfig(/* 設定 */))
+        val factory = SensorPipelineFactory(this)
+        pipeline = factory.buildPipeline(
+            collectors = listOf(AccelerometerCollector(this)),
+            consumers  = listOf(factory.senderConsumer(UdpSender("192.168.1.100", 6666)))
+        )
         pipeline.start()
         return START_STICKY
     }
@@ -155,8 +146,16 @@ class MySensingService : Service() {
 
 ---
 
+## Android Service との関係
+
+Service は UI 層の責務なのでライブラリ本体（sensing / storage / network / pipeline）には含めない。
+アプリ側で薄いラッパー Service を書いて Pipeline を内部で使う。
+
+---
+
 ## 設計メモ
 
 - `BaseSensorCollector` のリスナーはコンストラクタではなく `start(listener)` で渡す設計にした。
   Pipeline が listener を組み立ててから渡せるため、Collector 単体の再利用性が高まる。
-- `SensorPipeline.stop()` では `sendExecutor.shutdown()` も呼ぶ。進行中の送信が完了してからスレッドが停止する。
+- `StoreConsumer` / `SenderConsumer` の `onStop()` は executor のシャットダウンを最大 5 秒待機する。未送信データの損失を防ぐため `pipeline.stop()` は必ず呼ぶこと。
+- `SyncJob` は送信失敗時に即 return してリトライを次回に委ねる。送信成功分のみ削除するため冪等性が保たれる。

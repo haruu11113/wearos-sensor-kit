@@ -46,7 +46,7 @@
 
 ---
 
-## フェーズ3：アーキテクチャ刷新
+## フェーズ3：アーキテクチャ刷新（完了）
 
 ### 設計方針
 
@@ -58,39 +58,17 @@
 
 ### タスク一覧
 
-| # | issue | 状態 | 依存 |
-|---|-------|------|------|
-| [031](031-define-sensor-consumer-interface.md) | `SensorConsumer` インターフェースの定義（**先行必須**） | 🔲 未着手 | - |
-| [035](035-update-sensor-data-store-interface.md) | `SensorDataStore` インターフェースの更新（**先行必須**） | 🔲 未着手 | - |
-| [032](032-implement-store-consumer.md) | `StoreConsumer` の実装 | 🔲 未着手 | 031・035 |
-| [033](033-implement-sender-consumer.md) | `SenderConsumer` の実装 | 🔲 未着手 | 031 |
-| [036](036-update-local-file-store.md) | `LocalFileStore` の更新 | 🔲 未着手 | 035 |
-| [037](037-implement-sqlite-store.md) | `SQLiteStore` の新規実装 | 🔲 未着手 | 035 |
-| [034](034-refactor-sensor-pipeline.md) | `SensorPipeline` のリファクタリング・`SensorPipelineConfig` 削除 | 🔲 未着手 | 031・032・033 |
-| [038](038-implement-sync-job.md) | `SyncJob` の実装 | 🔲 未着手 | 035 |
-| [039](039-implement-sensor-pipeline-factory.md) | `SensorPipelineFactory` の実装（**最後**） | 🔲 未着手 | 031〜038 |
-| [040](040-update-usage-docs-new-architecture.md) | `USAGE.md` を新アーキテクチャに合わせて更新 | 🔲 未着手 | 039 |
+| # | issue | 状態 |
+|---|-------|------|
+| [031](done/031-define-sensor-consumer-interface.md) | `SensorConsumer` インターフェースの定義 | ✅ 完了 |
+| [035](done/035-update-sensor-data-store-interface.md) | `SensorDataStore` インターフェースの更新 | ✅ 完了 |
+| [032](done/032-implement-store-consumer.md) | `StoreConsumer` の実装 | ✅ 完了 |
+| [033](done/033-implement-sender-consumer.md) | `SenderConsumer` の実装 | ✅ 完了 |
+| [036](done/036-update-local-file-store.md) | `LocalFileStore` の更新 | ✅ 完了 |
+| [037](done/037-implement-sqlite-store.md) | `SQLiteStore` の新規実装 | ✅ 完了 |
+| [034](done/034-refactor-sensor-pipeline.md) | `SensorPipeline` のリファクタリング・`SensorPipelineConfig` 削除 | ✅ 完了 |
+| [038](done/038-implement-sync-job.md) | `SyncJob` の実装 | ✅ 完了 |
+| [039](done/039-implement-sensor-pipeline-factory.md) | `SensorPipelineFactory` の実装 | ✅ 完了 |
+| [040](done/040-update-usage-docs-new-architecture.md) | `USAGE.md` を新アーキテクチャに合わせて更新 | ✅ 完了 |
 
-### 並列作業の進め方
-
-```
-ステップ1（並列可）
-  031: SensorConsumer I/F 定義
-  035: SensorDataStore I/F 更新
-
-ステップ2（031・035 完了後、並列可）
-  032: StoreConsumer
-  033: SenderConsumer
-  036: LocalFileStore 更新
-  037: SQLiteStore 新規実装
-  038: SyncJob
-
-ステップ3（ステップ2 完了後）
-  034: SensorPipeline リファクタ・SensorPipelineConfig 削除
-
-ステップ4（034・038 完了後）
-  039: SensorPipelineFactory
-
-ステップ5（039 完了後）
-  040: USAGE.md 更新
-```
+全 10 件完了。フェーズ3（アーキテクチャ刷新）は完結。

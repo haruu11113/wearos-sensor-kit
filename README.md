@@ -39,8 +39,9 @@ wearos/
 
 | ファイル | 役割 |
 |---------|------|
-| `SensorDataStore.kt` | 永続化インターフェース |
+| `SensorDataStore.kt` | 永続化インターフェース (`save` / `readAll` / `delete`) |
 | `LocalFileStore.kt` | アプリ内ストレージへの JSONL 追記保存 |
+| `SQLiteStore.kt` | SQLite による保存（store-and-forward 向け、デフォルト実装） |
 
 ### network
 
@@ -57,8 +58,12 @@ wearos/
 |---------|------|
 | `SensorDataSerializer.kt` | シリアライズインターフェース |
 | `JsonSerializer.kt` | `SensorData` → JSON 文字列 |
-| `SensorPipelineConfig.kt` | collectors / serializer / store / sender をまとめる設定 |
+| `SensorConsumer.kt` | データ消費インターフェース (`onData` / `onStop`) |
+| `StoreConsumer.kt` | `SensorConsumer` → `SensorDataStore` へ保存 |
+| `SenderConsumer.kt` | `SensorConsumer` → `DataSender` へ送信 |
 | `SensorPipeline.kt` | `start()` / `stop()` でフロー全体を制御 |
+| `SyncJob.kt` | Store に蓄積済みデータを Sender へ一括転送（store-and-forward） |
+| `SensorPipelineFactory.kt` | Pipeline / SyncJob を組み立てるファクトリ |
 
 ## データ形式
 
@@ -131,14 +136,10 @@ class MySensingService : Service() {
     private lateinit var pipeline: SensorPipeline
 
     override fun onStartCommand(intent: Intent?, flags: Int, startId: Int): Int {
-        pipeline = SensorPipeline(
-            SensorPipelineConfig(
-                collectors = listOf(
-                    AccelerometerCollector(this),
-                    HeartRateCollector(this)
-                ),
-                sender = UdpSender("192.168.1.100", 6666)
-            )
+        val factory = SensorPipelineFactory(this)
+        pipeline = factory.buildPipeline(
+            collectors = listOf(AccelerometerCollector(this), HeartRateCollector(this)),
+            consumers  = listOf(factory.senderConsumer(UdpSender("192.168.1.100", 6666)))
         )
         pipeline.start()
         return START_STICKY
@@ -149,37 +150,47 @@ class MySensingService : Service() {
 }
 ```
 
-### 保存 + 送信
+### Store に蓄積 → あとで送信（store-and-forward）
 
 ```kotlin
-SensorPipelineConfig(
-    collectors = listOf(AccelerometerCollector(this)),
-    store  = LocalFileStore(this),           // ローカル保存も行う
-    sender = UdpSender("192.168.1.100", 6666)
-)
-```
+val factory = SensorPipelineFactory(context)
 
-`store` / `sender` はどちらも `null` 可（省略した機能はスキップされます）。
+// 収集：常時 Store に保存
+val pipeline = factory.buildPipeline(
+    collectors = listOf(AccelerometerCollector(this)),
+    consumers  = listOf(factory.storeConsumer())
+)
+pipeline.start()
+
+// 送信：任意のタイミングで呼ぶ
+val syncJob = factory.buildSyncJob(UdpSender("192.168.1.100", 6666))
+syncJob.execute()
+```
 
 ### HTTP で送信する
 
 ```kotlin
-SensorPipelineConfig(
+val factory = SensorPipelineFactory(context)
+val pipeline = factory.buildPipeline(
     collectors = listOf(AccelerometerCollector(this)),
-    sender = HttpSender("https://example.com/api/sensor")
+    consumers  = listOf(factory.senderConsumer(HttpSender("https://example.com/api/sensor")))
 )
 ```
 
 ### Cloud Firestore に送信する
 
 ```kotlin
-SensorPipelineConfig(
+val factory = SensorPipelineFactory(context)
+val pipeline = factory.buildPipeline(
     collectors = listOf(AccelerometerCollector(this)),
-    sender = FirestoreSender(collection = "sensor_data", batchSize = 20)
+    consumers  = listOf(factory.storeConsumer())
 )
+pipeline.start()
+
+// 任意のタイミングで Firestore へ転送
+factory.buildSyncJob(FirestoreSender()).execute()
 ```
 
-`batchSize` 件ごとに `WriteBatch` でまとめて書き込みます（デフォルト 20）。
 利用側アプリに `google-services.json` の配置と Google Services プラグインの設定が必要です。
 詳細セットアップ手順 → [docs/USAGE.md](docs/USAGE.md)
 
@@ -213,13 +224,17 @@ nc -ulp 6666
 ```
 MainActivity
   └─ Start/Stop ──▶ SensingService
-                      └─ SensorPipeline
-                           ├─ AccelerometerCollector
-                           ├─ HeartRateCollector      } onSensorChanged()
-                           └─ LightCollector
-                                └─ JsonSerializer.serialize()
-                                     ├─ LocalFileStore.save()   (省略可)
-                                     └─ UdpSender.send()  ──▶ UDP 送信 (省略可)
+                      └─ SensorPipelineFactory
+                           └─ SensorPipeline
+                                ├─ AccelerometerCollector
+                                ├─ HeartRateCollector      } onSensorChanged()
+                                └─ LightCollector
+                                     └─ SensorConsumer.onData()
+                                          ├─ StoreConsumer ──▶ SQLiteStore（蓄積）
+                                          └─ SenderConsumer ──▶ UdpSender など（リアルタイム送信）
+
+SyncJob（任意タイミング）
+  └─ SQLiteStore.readAll() ──▶ DataSender.send() ──▶ 送信完了後 SQLiteStore.delete()
 ```
 
 ## ドキュメント
