@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    `maven-publish`
 }
 
 android {
@@ -23,4 +24,17 @@ android {
 
 dependencies {
     implementation(libs.core.ktx)
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId    = "com.github.haruu11113.wearos"
+                artifactId = "sensing"
+                version    = "1.0.0"
+            }
+        }
+    }
 }
