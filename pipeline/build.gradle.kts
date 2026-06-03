@@ -2,6 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
+    `maven-publish`
 }
 
 android {
@@ -26,4 +27,17 @@ dependencies {
     api(project(":sensing"))
     api(project(":storage"))
     api(project(":network"))
+}
+
+afterEvaluate {
+    publishing {
+        publications {
+            create<MavenPublication>("release") {
+                from(components["release"])
+                groupId    = "com.github.haruu11113.wearos"
+                artifactId = "pipeline"
+                version    = "1.0.0"
+            }
+        }
+    }
 }
