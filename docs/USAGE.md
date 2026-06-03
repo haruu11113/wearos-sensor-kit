@@ -7,7 +7,7 @@
 利用側プロジェクトのルートで実行:
 
 ```bash
-git submodule add https://github.com/haruu11113/wearos.git libs/wearos
+git submodule add https://github.com/haruu11113/wearos-sensor-kit.git libs/wearos-sensor-kit
 git submodule update --init
 ```
 
@@ -17,7 +17,7 @@ git submodule update --init
 your-app/
 ├── app/
 ├── libs/
-│   └── wearos/          ← このリポジトリ
+│   └── wearos-sensor-kit/  ← このリポジトリ
 │       ├── sensing/
 │       ├── storage/
 │       ├── network/
@@ -27,18 +27,18 @@ your-app/
 
 ### 2. local.properties をシンボリックリンクで共有
 
-composite build では `libs/wearos/` にも Android SDK パスが必要です。
+composite build では `libs/wearos-sensor-kit/` にも Android SDK パスが必要です。
 親プロジェクトのルートで以下を実行し、`local.properties` へのシンボリックリンクを作成してください。
 
 ```bash
-ln -s $(pwd)/local.properties libs/wearos/local.properties
+ln -s $(pwd)/local.properties libs/wearos-sensor-kit/local.properties
 ```
 
 ### 3. settings.gradle.kts に追記
 
 ```kotlin
 // your-app/settings.gradle.kts
-includeBuild("libs/wearos") {
+includeBuild("libs/wearos-sensor-kit") {
     dependencySubstitution {
         substitute(module("com.github.haruu11113.wearos:pipeline")).using(project(":pipeline"))
     }
@@ -164,7 +164,7 @@ your-app/
 │   ├── google-services.json   ← ここに配置
 │   └── src/
 ├── libs/
-│   └── wearos/
+│   └── wearos-sensor-kit/
 └── settings.gradle.kts
 ```
 
@@ -290,10 +290,10 @@ val pipeline = factory.buildPipeline(
 ライブラリ側が更新されたときは利用側で以下を実行:
 
 ```bash
-cd libs/wearos
+cd libs/wearos-sensor-kit
 git pull origin main
 cd ../..
-git add libs/wearos
+git add libs/wearos-sensor-kit
 git commit -m "chore: update wearos submodule"
 ```
 

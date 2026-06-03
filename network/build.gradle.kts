@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.wearos.network"
+    namespace = "com.haruu11113.wearossensorkit.network"
     compileSdk = 34
 
     defaultConfig {
@@ -33,7 +33,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId    = "com.github.haruu11113.wearos"
+                groupId    = "com.github.haruu11113.wearos-sensor-kit"
                 artifactId = "network"
                 version    = "1.0.0"
             }

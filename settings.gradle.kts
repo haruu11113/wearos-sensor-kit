@@ -13,5 +13,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "wearos"
+rootProject.name = "wearos-sensor-kit"
 include(":sensing", ":storage", ":network", ":pipeline", ":app")
