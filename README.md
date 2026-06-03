@@ -1,6 +1,6 @@
 # WearOS センシングライブラリ
 
-Wear OS デバイス（スマートウォッチ）でセンサーデータを取得し、JSON 形式でローカル保存・UDP 送信できるライブラリです。
+Wear OS デバイス（スマートウォッチ）でセンサーデータを取得し、JSON 形式でローカル保存・UDP / HTTP / Firestore 送信できるライブラリです。
 センシング・保存・送信が疎結合に分離されており、別のアプリへのコピペや依存追加で再利用できます。
 
 ## 概要
@@ -9,14 +9,67 @@ Wear OS デバイス（スマートウォッチ）でセンサーデータを取
 |------|------|
 | プラットフォーム | Wear OS (minSdk 30 / targetSdk 33) |
 | 言語 | Kotlin |
-| UI フレームワーク | Jetpack Compose (Wear Material) |
-| 通信プロトコル | UDP |
+| UI フレームワーク | Jetpack Compose (Wear Material) ※サンプルアプリのみ |
+| 通信プロトコル | UDP / HTTP / Firestore |
 | データ形式 | JSON (JSONL) |
+
+---
+
+## 対応範囲・依存関係
+
+### プラットフォーム対応
+
+| プラットフォーム | 対応状況 | 備考 |
+|----------------|---------|------|
+| Wear OS 3.x 以降（API 30+） | ✅ 主対象 | 設計のベースライン |
+| Wear OS 4 (API 34+) | ✅ 対応 | `health.READ_HEART_RATE` 等の新パーミッション対応済み |
+| Android スマートフォン（API 30+） | ⚠️ 一部のみ動作 | 心拍・SpO2・皮膚温度等のセンサーはハードウェア非搭載のため動作しない |
+| その他（iOS / Web 等） | ❌ 非対応 | Android `SensorManager` に依存 |
+
+### センサー別のデバイス依存
+
+| センサー | Pixel Watch 2 | 他 Wear OS | Android スマホ |
+|---------|---------------|-----------|--------------|
+| 加速度 / ジャイロ / 地磁気 | ✅ | ✅ | ✅ |
+| 回転ベクトル / 重力 / 線形加速度 | ✅ | ✅ | ✅ |
+| 歩数カウンター / 歩行検出 | ✅ | ✅ | ✅ |
+| 気圧 | ✅ | デバイス次第 | デバイス次第 |
+| 照度 | ✅ | ✅ | ✅ |
+| 心拍数 / 心拍ビート | ✅ | ✅ | ❌ |
+| SpO2（血中酸素飽和度） | ✅ | デバイス次第 | ❌ |
+| 皮膚温度 | ✅ | Pixel Watch 2 固有想定 | ❌ |
+| 装着検出（off-body） | ✅ | ✅ | ❌ |
+
+> Pixel Watch 2 で全 15 種類のセンサーが動作確認の主対象。他デバイスでは「センサーが存在しない場合は黙ってスキップ」する設計のため、安全に部分的な利用が可能です。
+
+### モジュール別の外部ライブラリ依存
+
+| モジュール | 外部ライブラリ | 必須/任意 |
+|-----------|---------------|---------|
+| `sensing` | AndroidX core-ktx | 必須 |
+| `storage` | AndroidX core-ktx | 必須 |
+| `network` | AndroidX core-ktx | 必須 |
+| `network` | Firebase BoM + Firestore KTX | **Firestore を使う場合のみ必須**（使わなければ初期化不要） |
+| `pipeline` | AndroidX core-ktx + 上記 3 モジュール | 必須 |
+
+> Firebase は `network` モジュールに `api` 依存として含まれていますが、`FirestoreSender` を使わなければ初期化処理は走らないため、Firebase プロジェクト作成・`google-services.json` 配置は不要です。
+
+### SDK / Gradle バージョン
+
+| 項目 | バージョン |
+|------|-----------|
+| `minSdk` | 30 |
+| `compileSdk` | 34 |
+| `targetSdk` | 33 |
+| JVM target | 1.8 |
+| Kotlin | プロジェクト設定に従う（`libs.versions.toml` 参照） |
+
+---
 
 ## モジュール構成
 
 ```
-wearos/
+wearos-sensor-kit/
 ├── sensing/    センサーデータ取得（Android フレームワークのみ依存）
 ├── storage/    JSON シリアライズ + ローカル保存（sensing に依存）
 ├── network/    UDP 送信（依存なし）
@@ -92,23 +145,23 @@ wearos/
 **Step 1** — サブモジュールとして追加:
 
 ```bash
-git submodule add https://github.com/haruu11113/wearos.git libs/wearos
+git submodule add https://github.com/haruu11113/wearos-sensor-kit.git libs/wearos-sensor-kit
 git submodule update --init
 ```
 
 **Step 2** — `local.properties` をシンボリックリンクで共有:
 
-composite build では `libs/wearos/` にも Android SDK パスが必要です。
+composite build では `libs/wearos-sensor-kit/` にも Android SDK パスが必要です。
 親プロジェクトの `local.properties` へのシンボリックリンクを作成して共有してください。
 
 ```bash
-ln -s $(pwd)/local.properties libs/wearos/local.properties
+ln -s $(pwd)/local.properties libs/wearos-sensor-kit/local.properties
 ```
 
 **Step 3** — `settings.gradle.kts` に追記:
 
 ```kotlin
-includeBuild("libs/wearos") {
+includeBuild("libs/wearos-sensor-kit") {
     dependencySubstitution {
         substitute(module("com.github.haruu11113.wearos:pipeline")).using(project(":pipeline"))
     }

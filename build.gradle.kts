@@ -8,7 +8,7 @@ plugins {
 
 // group / version は git submodule + includeBuild の dependencySubstitution で参照される
 allprojects {
-    group = "com.github.haruu11113.wearos"
+    group = "com.github.haruu11113.wearos-sensor-kit"
     version = "1.0.0-SNAPSHOT"
 }
 

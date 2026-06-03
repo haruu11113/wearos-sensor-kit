@@ -6,7 +6,7 @@ plugins {
 }
 
 android {
-    namespace = "com.example.wearos.storage"
+    namespace = "com.haruu11113.wearossensorkit.storage"
     compileSdk = 34
 
     defaultConfig {
@@ -32,7 +32,7 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId    = "com.github.haruu11113.wearos"
+                groupId    = "com.github.haruu11113.wearos-sensor-kit"
                 artifactId = "storage"
                 version    = "1.0.0"
             }

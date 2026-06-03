@@ -5,11 +5,11 @@ plugins {
 }
 
 android {
-    namespace = "com.example.wearos"
+    namespace = "com.haruu11113.wearossensorkit"
     compileSdk = 34
 
     defaultConfig {
-        applicationId = "com.example.wearos"
+        applicationId = "com.haruu11113.wearossensorkit"
         minSdk = 30
         targetSdk = 33
         versionCode = 1

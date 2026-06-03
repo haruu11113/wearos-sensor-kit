@@ -28,7 +28,7 @@ app       ───▶ pipeline のみ  モジュール内部を直接触らな�
 **責務**: センサーから値を読み取り、型付きの `SensorData` として通知する。ネットワークや保存は知らない。
 
 ```
-sensing/src/main/java/com/example/wearos/sensing/
+sensing/src/main/java/com/haruu11113/wearossensorkit/sensing/
 ├── SensorData.kt              データクラス (type, values, timestampNs)
 ├── SensorCollectorListener.kt コールバックインターフェース
 ├── BaseSensorCollector.kt     抽象基底: SensorManager 登録/解除
@@ -59,7 +59,7 @@ interface SensorCollectorListener {
 **責務**: `SensorData` を JSON 文字列としてローカルに保存する。取得方法も送信方法も知らない。
 
 ```
-storage/src/main/java/com/example/wearos/storage/
+storage/src/main/java/com/haruu11113/wearossensorkit/storage/
 ├── SensorDataStore.kt   インターフェース: save(String):Long / readAll() / delete(List<Long>)
 ├── LocalFileStore.kt    実装: アプリ内ストレージへ JSONL 追記
 └── SQLiteStore.kt       実装: SQLite による保存（store-and-forward 向け、デフォルト）
@@ -75,7 +75,7 @@ storage/src/main/java/com/example/wearos/storage/
 **責務**: 文字列ペイロードを外部へ送る。センサーも保存も知らない。
 
 ```
-network/src/main/java/com/example/wearos/network/
+network/src/main/java/com/haruu11113/wearossensorkit/network/
 ├── DataSender.kt      インターフェース: send(payload: String)
 ├── UdpSender.kt       実装: UDP 送信（DatagramSocket）
 ├── HttpSender.kt      実装: HTTP POST 送信
@@ -92,7 +92,7 @@ network/src/main/java/com/example/wearos/network/
 **責務**: sensing / storage / network を組み合わせる。`SensorConsumer` インターフェースで処理を統一し、Store / Sender / ML 推論など任意の Consumer をリストで追加できる。
 
 ```
-pipeline/src/main/java/com/example/wearos/pipeline/
+pipeline/src/main/java/com/haruu11113/wearossensorkit/pipeline/
 ├── SensorDataSerializer.kt   インターフェース: serialize(SensorData): String
 ├── JsonSerializer.kt         実装: JSON 文字列を返す
 ├── SensorConsumer.kt         インターフェース: onData(SensorData) / onStop()
