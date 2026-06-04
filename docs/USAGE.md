@@ -53,7 +53,7 @@ includeBuild("libs/wearos-sensor-kit") {
 ```kotlin
 // your-app/app/build.gradle.kts
 dependencies {
-    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.1")
 }
 ```
 
@@ -311,6 +311,6 @@ repositories {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.1")
 }
 ```

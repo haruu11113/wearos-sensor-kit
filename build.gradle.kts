@@ -9,7 +9,7 @@ plugins {
 // group / version は git submodule + includeBuild の dependencySubstitution で参照される
 allprojects {
     group = "com.github.haruu11113.wearos-sensor-kit"
-    version = "1.0.0"
+    version = "1.0.1"
 }
 
 true // Needed to make the Suppress annotation work for the plugins block

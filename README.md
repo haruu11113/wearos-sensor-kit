@@ -172,7 +172,7 @@ includeBuild("libs/wearos-sensor-kit") {
 
 ```kotlin
 dependencies {
-    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.1")
 }
 ```
 
