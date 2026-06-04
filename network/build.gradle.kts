@@ -2,7 +2,7 @@
 plugins {
     alias(libs.plugins.com.android.library)
     alias(libs.plugins.org.jetbrains.kotlin.android)
-    `maven-publish`
+    id("maven-publish")
 }
 
 android {
@@ -33,9 +33,6 @@ afterEvaluate {
         publications {
             create<MavenPublication>("release") {
                 from(components["release"])
-                groupId    = "com.github.haruu11113.wearos-sensor-kit"
-                artifactId = "network"
-                version    = "1.0.0"
             }
         }
     }
