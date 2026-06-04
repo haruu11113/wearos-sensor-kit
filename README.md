@@ -1,7 +1,7 @@
 # wearos-sensor-kit
 
 [![JitPack](https://jitpack.io/v/haruu11113/wearos-sensor-kit.svg)](https://jitpack.io/#haruu11113/wearos-sensor-kit)
-[![License](https://img.shields.io/badge/License-Apache_2.0-blue.svg)](LICENSE)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 
 Wear OS デバイス向けセンサーデータ収集ライブラリ。15 種類のセンサーから値を取得し、
 JSON 形式でローカル保存・UDP / HTTP / Firestore 送信ができます。
@@ -109,10 +109,10 @@ pipeline  ─▶ 上記を組み合わせる配線層
 
 - [使い方ガイド](docs/USAGE.md) — インストール・コード例・パーミッション
 - [設計ドキュメント](docs/DESIGN.md) — アーキテクチャ・設計判断
-- [ライセンス](LICENSE) — Apache License 2.0
+- [ライセンス](LICENSE) — MIT License
 
 ---
 
 ## ライセンス
 
-Apache License 2.0. 詳細は [LICENSE](LICENSE) を参照。
+MIT License. 詳細は [LICENSE](LICENSE) を参照。
