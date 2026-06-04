@@ -40,7 +40,7 @@ ln -s $(pwd)/local.properties libs/wearos-sensor-kit/local.properties
 // your-app/settings.gradle.kts
 includeBuild("libs/wearos-sensor-kit") {
     dependencySubstitution {
-        substitute(module("com.github.haruu11113.wearos:pipeline")).using(project(":pipeline"))
+        substitute(module("com.github.haruu11113.wearos-sensor-kit:pipeline")).using(project(":pipeline"))
     }
 }
 ```
@@ -53,7 +53,7 @@ includeBuild("libs/wearos-sensor-kit") {
 ```kotlin
 // your-app/app/build.gradle.kts
 dependencies {
-    implementation("com.github.haruu11113.wearos:pipeline:1.0.0-SNAPSHOT")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
 }
 ```
 
@@ -311,6 +311,6 @@ repositories {
 
 // app/build.gradle.kts
 dependencies {
-    implementation("com.github.haruu11113.wearos:pipeline:1.0.0")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
 }
 ```

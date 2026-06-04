@@ -163,7 +163,7 @@ ln -s $(pwd)/local.properties libs/wearos-sensor-kit/local.properties
 ```kotlin
 includeBuild("libs/wearos-sensor-kit") {
     dependencySubstitution {
-        substitute(module("com.github.haruu11113.wearos:pipeline")).using(project(":pipeline"))
+        substitute(module("com.github.haruu11113.wearos-sensor-kit:pipeline")).using(project(":pipeline"))
     }
 }
 ```
@@ -172,7 +172,7 @@ includeBuild("libs/wearos-sensor-kit") {
 
 ```kotlin
 dependencies {
-    implementation("com.github.haruu11113.wearos:pipeline:1.0.0-SNAPSHOT")
+    implementation("com.github.haruu11113.wearos-sensor-kit:pipeline:1.0.0")
 }
 ```
 
